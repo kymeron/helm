@@ -102,6 +102,7 @@ export async function createTask(input: TaskInput): Promise<Task> {
     createdAt: now,
     updatedAt: now,
     completedAt: null,
+    deletedAt: null,
   }
   await db.put('tasks', task)
   return task
@@ -144,13 +145,52 @@ export async function deleteTask(id: string): Promise<boolean> {
   const db = await getDB()
   const existing = await db.get('tasks', id)
   if (!existing) return false
-  await db.delete('tasks', id)
+  // Soft delete: set deletedAt so the tombstone propagates through the
+  // LAN sync layer. Hard GC of rows older than `deletedAt + TOMBSTONE_TTL`
+  // can be added later (see `purgeTombstones`).
+  const now = new Date().toISOString()
+  const updated: Task = {
+    ...existing,
+    deletedAt: now,
+    updatedAt: now,
+  }
+  await db.put('tasks', updated)
   return true
+}
+
+/**
+ * Hard-remove soft-deleted tasks older than 30 days. Safe to call
+ * periodically (e.g. on app boot) to keep IndexedDB tidy.
+ */
+export async function purgeTombstones(ttlDays = 30): Promise<number> {
+  const db = await getDB()
+  const all = await db.getAll('tasks')
+  const cutoff = Date.now() - ttlDays * 24 * 60 * 60 * 1000
+  const stale = all.filter(
+    (t) => t.deletedAt && new Date(t.deletedAt).getTime() < cutoff,
+  )
+  const tx = db.transaction('tasks', 'readwrite')
+  await Promise.all(stale.map((t) => tx.store.delete(t.id)))
+  await tx.done
+  return stale.length
 }
 
 export async function clearAllTasks(): Promise<void> {
   const db = await getDB()
   await db.clear('tasks')
+}
+
+/**
+ * Bulk-insert or update a list of tasks in a single transaction.
+ * Used by the LAN sync layer to reconcile local IndexedDB with a
+ * remote snapshot in one round-trip.
+ */
+export async function bulkPutTasks(tasks: Task[]): Promise<void> {
+  if (tasks.length === 0) return
+  const db = await getDB()
+  const tx = db.transaction('tasks', 'readwrite')
+  await Promise.all(tasks.map((t) => tx.store.put(t)))
+  await tx.done
 }
 
 // ============================================
@@ -222,6 +262,7 @@ export async function seedIfEmpty(): Promise<void> {
       createdAt,
       updatedAt,
       completedAt,
+      deletedAt: null,
     }
     await db.put('tasks', task)
   }

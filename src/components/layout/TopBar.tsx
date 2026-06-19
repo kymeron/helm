@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useUIStore } from '@/store'
+import { SyncIndicator } from '@/components/ui/SyncIndicator'
 import logoSvg from '@/assets/logo.svg?raw'
 
 const LOGO_COLOR = '#5eead4'
@@ -78,6 +79,12 @@ function TopBar() {
 
         {/* Status + Actions — right aligned */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          {/* Sync indicator — visible at sm+ so mobile devices can confirm
+              they are talking to the LAN sync server. */}
+          <div className="hidden sm:flex items-center pl-3 border-l border-border">
+            <SyncIndicator />
+          </div>
+
           <div className="hidden lg:flex items-center gap-4 font-mono text-[10px] text-ink-muted uppercase tracking-widest">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full animate-matrix-pulse" style={{ backgroundColor: '#00ff41', boxShadow: '0 0 6px rgba(0, 255, 65, 0.6)' }} />

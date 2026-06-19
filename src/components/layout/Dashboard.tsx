@@ -10,6 +10,7 @@ import { TaskModal } from '@/components/kanban/TaskModal'
 import { TaskDetailModal } from '@/components/kanban/TaskDetailModal'
 import { useTasksStore, useUIStore } from '@/store'
 import { useStats } from '@/hooks/useStats'
+import { useSync } from '@/hooks/useSync'
 import type { Task, TimeRange } from '@/types/task'
 
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
@@ -43,6 +44,10 @@ function Dashboard() {
       init()
     }
   }, [initialized, init])
+
+  // Mount the LAN sync layer once the store is up.
+  // The hook opens its own WebSocket and pushes local mutations out.
+  useSync({ enabled: initialized })
 
   const handleEditTask = (task: Task) => {
     openEditModal(task)

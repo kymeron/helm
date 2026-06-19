@@ -22,11 +22,22 @@ interface TasksActions {
   updateTask: (id: string, patch: Partial<TaskInput>) => Promise<void>
   transitionStatus: (id: string, to: TaskStatus) => Promise<void>
   deleteTask: (id: string) => Promise<void>
+  /**
+   * Replace the entire task list (used by the LAN sync layer to apply
+   * a remote snapshot). The tasks are persisted to IndexedDB so they
+   * survive page reloads.
+   */
+  replaceAllTasks: (tasks: Task[]) => Promise<void>
   exportTasks: () => Promise<void>
   clearError: () => void
 }
 
 export type TasksStore = TasksState & TasksActions
+
+/** Select tasks that are not soft-deleted (tombstones hidden). */
+export function selectActiveTasks(state: TasksState): Task[] {
+  return state.tasks.filter((t) => !t.deletedAt)
+}
 
 export const useTasksStore = create<TasksStore>((set, get) => ({
   tasks: [],
@@ -99,10 +110,12 @@ export const useTasksStore = create<TasksStore>((set, get) => ({
   deleteTask: async (id) => {
     set({ loading: true, error: null })
     try {
-      const success = await db.deleteTask(id)
-      if (success) {
+      // Soft-delete: row stays in the store with deletedAt set so the
+      // LAN sync layer can propagate the deletion via LWW.
+      const updated = await db.deleteTask(id)
+      if (updated) {
         set((state) => ({
-          tasks: state.tasks.filter((t) => t.id !== id),
+          tasks: state.tasks.map((t) => (t.id === id ? { ...t, deletedAt: new Date().toISOString() } : t)),
           loading: false,
         }))
       } else {
@@ -110,6 +123,20 @@ export const useTasksStore = create<TasksStore>((set, get) => ({
       }
     } catch (e) {
       set({ error: (e as Error).message, loading: false })
+    }
+  },
+
+  replaceAllTasks: async (tasks) => {
+    set({ loading: true, error: null })
+    try {
+      // Reconcile IndexedDB: clear and reinsert so deletions on other
+      // devices propagate here. Cheap for personal-scale task counts.
+      await db.clearAllTasks()
+      await db.bulkPutTasks(tasks)
+      set({ tasks, loading: false, initialized: true })
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false })
+      throw e
     }
   },
 

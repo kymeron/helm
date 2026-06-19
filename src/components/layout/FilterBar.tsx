@@ -1,4 +1,5 @@
-import { useTasksStore, useUIStore } from '@/store'
+import { useShallow } from 'zustand/react/shallow'
+import { useTasksStore, useUIStore, selectActiveTasks } from '@/store'
 import type { TaskType, Priority, SortKey } from '@/types/task'
 
 const typeOptions: { value: TaskType | 'all'; label: string }[] = [
@@ -22,7 +23,7 @@ const sortKeyOptions: { value: SortKey; label: string }[] = [
 ]
 
 function FilterBar() {
-  const tasks = useTasksStore((s) => s.tasks)
+  const tasks = useTasksStore(useShallow(selectActiveTasks))
   const filters = useUIStore((s) => s.filters)
   const setFilterType = useUIStore((s) => s.setFilterType)
   const setFilterPriority = useUIStore((s) => s.setFilterPriority)

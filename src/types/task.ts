@@ -18,6 +18,13 @@ export interface Task {
   createdAt: string // ISO 8601
   updatedAt: string // ISO 8601
   completedAt: string | null // ISO 8601 or null
+  /**
+   * Soft-delete tombstone. When set, the task is treated as deleted and
+   * hidden from the UI, but the record is preserved so the LAN sync layer
+   * can propagate the deletion to other devices (which would otherwise
+   * be impossible once the row is physically removed).
+   */
+  deletedAt: string | null
 }
 
 export interface TaskInput {

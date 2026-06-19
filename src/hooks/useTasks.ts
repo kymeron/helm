@@ -3,7 +3,8 @@
  */
 
 import { useMemo } from 'react'
-import { useTasksStore, useUIStore } from '@/store'
+import { useShallow } from 'zustand/react/shallow'
+import { useTasksStore, useUIStore, selectActiveTasks } from '@/store'
 import { applyFilters, sortTasks } from '@/lib/filters'
 import type { Task, TaskStatus } from '@/types/task'
 
@@ -15,7 +16,7 @@ interface UseTasksResult {
 }
 
 export function useTasks(): UseTasksResult {
-  const tasks = useTasksStore((s) => s.tasks)
+  const tasks = useTasksStore(useShallow(selectActiveTasks))
   const loading = useTasksStore((s) => s.loading)
   const error = useTasksStore((s) => s.error)
   const filters = useUIStore((s) => s.filters)

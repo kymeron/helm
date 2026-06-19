@@ -1,2 +1,2 @@
-export { useTasksStore } from './tasksSlice'
+export { useTasksStore, selectActiveTasks } from './tasksSlice'
 export { useUIStore } from './uiSlice'

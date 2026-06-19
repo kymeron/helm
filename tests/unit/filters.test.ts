@@ -20,6 +20,7 @@ function createMockTask(
     createdAt,
     updatedAt,
     completedAt: null,
+      deletedAt: null,
   }
 }
 

@@ -3,7 +3,8 @@
  */
 
 import { useMemo } from 'react'
-import { useTasksStore, useUIStore } from '@/store'
+import { useShallow } from 'zustand/react/shallow'
+import { useTasksStore, useUIStore, selectActiveTasks } from '@/store'
 import { computeMetrics, computeTypeDistribution, computeTrend, computeHeatmapData } from '@/lib/stats'
 import type { Metrics, TypeDistribution, TrendDay, HeatmapDay } from '@/lib/stats'
 
@@ -15,7 +16,7 @@ interface UseStatsResult {
 }
 
 export function useStats(): UseStatsResult {
-  const tasks = useTasksStore((s) => s.tasks)
+  const tasks = useTasksStore(useShallow(selectActiveTasks))
   const timeRange = useUIStore((s) => s.timeRange)
 
   return useMemo(() => {

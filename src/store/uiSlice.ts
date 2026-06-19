@@ -6,7 +6,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { TaskType, Priority, TimeRange, SortKey, SortOrder, Filters, Task } from '@/types/task'
+import type { TaskType, Priority, TimeRange, SortKey, SortOrder, Filters, Task, TaskStatus } from '@/types/task'
 
 interface UIState {
   filters: Filters
@@ -17,6 +17,7 @@ interface UIState {
   showStats: boolean
   modalOpen: boolean
   editingTask: Task | null
+  defaultStatus: TaskStatus | null
 }
 
 interface UIActions {
@@ -28,7 +29,7 @@ interface UIActions {
   setTimeRange: (range: TimeRange) => void
   setSearchQuery: (query: string) => void
   toggleStats: () => void
-  openCreateModal: () => void
+  openCreateModal: (status?: TaskStatus) => void
   openEditModal: (task: Task) => void
   closeModal: () => void
 }
@@ -52,6 +53,7 @@ export const useUIStore = create<UIStore>()(
       showStats: true,
       modalOpen: false,
       editingTask: null,
+      defaultStatus: null,
 
       setFilterType: (type) =>
         set((state) => ({ filters: { ...state.filters, type } })),
@@ -72,11 +74,11 @@ export const useUIStore = create<UIStore>()(
 
       toggleStats: () => set((state) => ({ showStats: !state.showStats })),
 
-      openCreateModal: () => set({ modalOpen: true, editingTask: null }),
-      
-      openEditModal: (task) => set({ modalOpen: true, editingTask: task }),
-      
-      closeModal: () => set({ modalOpen: false, editingTask: null }),
+      openCreateModal: (status) => set({ modalOpen: true, editingTask: null, defaultStatus: status ?? null }),
+
+      openEditModal: (task) => set({ modalOpen: true, editingTask: task, defaultStatus: null }),
+
+      closeModal: () => set({ modalOpen: false, editingTask: null, defaultStatus: null }),
     }),
     {
       name: 'helm.ui-preferences',

@@ -13,6 +13,7 @@ interface KanbanColumnProps {
   onEditTask: (task: Task) => void
   onDeleteTask: (taskId: string) => void
   onViewTask: (task: Task) => void
+  onCreateTask: (status: TaskStatus) => void
 }
 
 const columnAccents: Record<TaskStatus, { dot: string; text: string }> = {
@@ -21,9 +22,17 @@ const columnAccents: Record<TaskStatus, { dot: string; text: string }> = {
   done: { dot: 'bg-ink-muted', text: 'text-ink-muted' },
 }
 
-function KanbanColumn({ status, title, tasks, onEditTask, onDeleteTask, onViewTask }: KanbanColumnProps) {
+function KanbanColumn({ status, title, tasks, onEditTask, onDeleteTask, onViewTask, onCreateTask }: KanbanColumnProps) {
   const accent = columnAccents[status]
   const { setNodeRef, isOver } = useDroppable({ id: status })
+
+  const handleContentDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only trigger when the dblclick lands on the column background,
+    // not when it bubbles up from a task card.
+    const target = e.target as HTMLElement
+    if (target.closest('[data-task-card]')) return
+    onCreateTask(status)
+  }
 
   return (
     <div
@@ -50,7 +59,10 @@ function KanbanColumn({ status, title, tasks, onEditTask, onDeleteTask, onViewTa
       </div>
 
       {/* Column Content */}
-      <div className="flex-1 p-2 overflow-y-auto min-h-[120px]">
+      <div
+        className="flex-1 p-2 overflow-y-auto min-h-[120px]"
+        onDoubleClick={handleContentDoubleClick}
+      >
         {tasks.length === 0 ? (
           <EmptyState
             message="暂无任务"

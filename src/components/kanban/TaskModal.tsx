@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useTasksStore } from '@/store'
+import { useTasksStore, useUIStore } from '@/store'
 import type { Task, TaskInput, TaskType, Priority } from '@/types/task'
 
 interface TaskModalProps {
@@ -26,6 +26,8 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
   const createTask = useTasksStore((s) => s.createTask)
   const updateTask = useTasksStore((s) => s.updateTask)
   const deleteTask = useTasksStore((s) => s.deleteTask)
+  const transitionStatus = useTasksStore((s) => s.transitionStatus)
+  const defaultStatus = useUIStore((s) => s.defaultStatus)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -71,7 +73,10 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
       if (task) {
         await updateTask(task.id, input)
       } else {
-        await createTask(input)
+        const created = await createTask(input)
+        if (defaultStatus && defaultStatus !== 'todo') {
+          await transitionStatus(created.id, defaultStatus)
+        }
       }
       onClose()
     } catch (err) {

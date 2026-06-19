@@ -56,6 +56,7 @@ function TaskCard({ task, onEdit, onDelete, onView }: TaskCardProps) {
     <div
       ref={setNodeRef}
       style={style}
+      data-task-card
       onClick={() => {
         if (!isDragging) onView(task)
       }}

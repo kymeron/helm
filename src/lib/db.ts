@@ -6,6 +6,45 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 import type { Task, TaskInput, TaskStatus, TaskType, Priority } from '@/types/task'
 
+/**
+ * Generate a RFC 4122 v4 UUID.
+ * Prefers the native `crypto.randomUUID()` (Chrome / Firefox / Safari 15.4+),
+ * and falls back to a `crypto.getRandomValues()`-based generator for
+ * older Safari / iPad Safari where `randomUUID` is unavailable.
+ */
+function uuid(): string {
+  const c = (typeof globalThis !== 'undefined' ? globalThis.crypto : undefined) as Crypto | undefined
+  if (c && typeof c.randomUUID === 'function') {
+    return c.randomUUID()
+  }
+  if (c && typeof c.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16)
+    c.getRandomValues(bytes)
+    // Per RFC 4122 §4.4: set version (4) and variant (10xx) bits.
+    // Cast to number: with noUncheckedIndexedAccess, indexed access
+    // on Uint8Array returns `number | undefined`.
+    const b6 = bytes[6] as number
+    const b8 = bytes[8] as number
+    bytes[6] = (b6 & 0x0f) | 0x40
+    bytes[8] = (b8 & 0x3f) | 0x80
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+    return (
+      hex.slice(0, 8) + '-' +
+      hex.slice(8, 12) + '-' +
+      hex.slice(12, 16) + '-' +
+      hex.slice(16, 20) + '-' +
+      hex.slice(20)
+    )
+  }
+  // Last resort: Math.random-based UUID (low entropy but still unique
+  // enough for a single-user local DB). Should never hit in practice.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = (Math.random() * 16) | 0
+    const v = ch === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 interface HelmDB extends DBSchema {
   tasks: {
     key: string
@@ -53,7 +92,7 @@ export async function createTask(input: TaskInput): Promise<Task> {
   const db = await getDB()
   const now = new Date().toISOString()
   const task: Task = {
-    id: crypto.randomUUID(),
+    id: uuid(),
     title: input.title.trim(),
     description: input.description?.trim() ?? '',
     type: input.type,
@@ -173,7 +212,7 @@ export async function seedIfEmpty(): Promise<void> {
     const completedAt = seed.completedDaysAgo != null ? daysAgo(seed.completedDaysAgo) : null
 
     const task: Task = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       title: seed.title,
       description: seed.description,
       type: seed.type,

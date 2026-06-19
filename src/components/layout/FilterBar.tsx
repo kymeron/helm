@@ -42,7 +42,7 @@ function FilterBar() {
     filters.tag !== null
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-1">
+    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 p-1">
       {/* Type Filter */}
       <div className="flex gap-px bg-bg-2 rounded-md overflow-hidden">
         {typeOptions.map((opt) => (

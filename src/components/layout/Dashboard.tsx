@@ -98,7 +98,7 @@ function Dashboard() {
     <div className="min-h-screen bg-bg flex flex-col">
       <TopBar />
 
-      <main className="flex-1 p-4 overflow-hidden">
+      <main className="flex-1 p-3 sm:p-4 overflow-y-auto">
         {/* Stats Section — toggleable via TopBar */}
         {showStats && (
         <section className="mb-3">
@@ -129,8 +129,8 @@ function Dashboard() {
           {/* Metrics Cards */}
           <StatBar />
 
-          {/* Charts — 3 columns, heatmap gets the most width */}
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_1.4fr_2fr] gap-3 mt-3">
+          {/* Charts — 1 col on mobile, 2 cols on md (iPad portrait), 3 cols on lg */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1.4fr_2fr] gap-3 mt-3">
             <TypeDonut data={typeDistribution} />
             <TrendLine data={trendData} />
             <ActivityHeatmap data={heatmapData} />

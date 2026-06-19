@@ -38,7 +38,7 @@ function KanbanColumn({ status, title, tasks, onEditTask, onDeleteTask, onViewTa
     <div
       ref={setNodeRef}
       className={cn(
-        'helm-card helm-card-glow flex flex-col min-w-[200px] flex-1 rounded-lg shadow-soft transition-all duration-200 ease-snappy',
+        'helm-card helm-card-glow flex flex-col min-h-[280px] md:min-h-0 md:min-w-[200px] md:flex-1 rounded-lg shadow-soft transition-all duration-200 ease-snappy',
         isOver && 'drop-target-active'
       )}
       style={{ borderColor: 'rgba(94, 234, 212, 0.12)' }}

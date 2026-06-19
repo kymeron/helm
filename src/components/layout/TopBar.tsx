@@ -39,12 +39,12 @@ function TopBar() {
 
   return (
     <header className="border-b border-border bg-surface/70 backdrop-blur-md sticky top-0 z-10">
-      <div className="px-6 py-2.5 flex items-center justify-between">
+      <div className="px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 sm:gap-4">
         {/* Wordmark */}
-        <div className="flex items-center gap-3 shrink-0 z-10">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 z-10">
           <div className="relative flex items-center justify-center">
             <div
-              className="w-7 h-7 [&_svg]:!w-full [&_svg]:!h-full"
+              className="w-6 h-6 sm:w-7 sm:h-7 [&_svg]:!w-full [&_svg]:!h-full"
               dangerouslySetInnerHTML={{
                 __html: logoSvg
                   .replace('#00FF66', LOGO_COLOR)
@@ -52,13 +52,13 @@ function TopBar() {
               }}
             />
           </div>
-          <h1 className="font-display text-2xl font-normal tracking-tight text-ink leading-none">
+          <h1 className="font-display text-xl sm:text-2xl font-normal tracking-tight text-ink leading-none">
             HELM
           </h1>
         </div>
 
-        {/* Search Bar — absolute centered */}
-        <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-72">
+        {/* Search Bar — flex item on mobile (flex-1), absolute centered on md+ */}
+        <div className="flex-1 min-w-0 md:flex-none md:absolute md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-72">
           <div className="relative">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted"
@@ -77,8 +77,8 @@ function TopBar() {
         </div>
 
         {/* Status + Actions — right aligned */}
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="hidden md:flex items-center gap-4 font-mono text-[10px] text-ink-muted uppercase tracking-widest">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="hidden lg:flex items-center gap-4 font-mono text-[10px] text-ink-muted uppercase tracking-widest">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full animate-matrix-pulse" style={{ backgroundColor: '#00ff41', boxShadow: '0 0 6px rgba(0, 255, 65, 0.6)' }} />
               <span>在线</span>
@@ -94,26 +94,28 @@ function TopBar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={toggleStats}
-              className={`px-3 py-2 border shadow-soft transition-all duration-200 ease-snappy font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-2 ${
+              className={`px-2.5 sm:px-3 py-2 border shadow-soft transition-all duration-200 ease-snappy font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 sm:gap-2 ${
                 showStats
                   ? 'bg-accent/10 border-accent/40 text-accent'
                   : 'bg-surface border-border text-ink-secondary hover:border-border-strong hover:text-ink'
               }`}
               title={showStats ? '隐藏指标与图表' : '显示指标与图表'}
+              aria-label={showStats ? '隐藏指标与图表' : '显示指标与图表'}
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6m6 6V9m-3 10V5M4 20h16" />
               </svg>
-              <span>指标</span>
+              <span className="hidden sm:inline">指标</span>
             </button>
 
             <button
               onClick={toggleFullscreen}
-              className="px-3 py-2 bg-surface border border-border text-ink-secondary hover:border-border-strong hover:text-ink shadow-soft transition-all duration-200 ease-snappy font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-2"
+              className="hidden sm:inline-flex px-3 py-2 bg-surface border border-border text-ink-secondary hover:border-border-strong hover:text-ink shadow-soft transition-all duration-200 ease-snappy font-mono text-xs uppercase tracking-wider rounded-lg items-center gap-2"
               title={isFullscreen ? '退出全屏' : '进入全屏'}
+              aria-label={isFullscreen ? '退出全屏' : '进入全屏'}
             >
               {isFullscreen ? (
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent, type KeyboardEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useTasksStore, useUIStore } from '@/store'
@@ -37,6 +37,9 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
   const [loading, setLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
+  const titleRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+
   useEffect(() => {
     if (task) {
       setTitle(task.title)
@@ -53,6 +56,30 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
     }
     setShowDeleteConfirm(false)
   }, [task, open])
+
+  // Auto-focus the title input on open. On mobile, defer focus so the
+  // virtual keyboard doesn't jump before the slide-up animation finishes.
+  useEffect(() => {
+    if (!open) return
+    const t = window.setTimeout(() => {
+      titleRef.current?.focus()
+    }, 250)
+    return () => window.clearTimeout(t)
+  }, [open])
+
+  // Submit on Enter when focused inside a single-line input. Mobile-friendly
+  // shortcut: type a title, hit "Done" on the keyboard, task is created.
+  // Textarea keeps newline-on-Enter by design; we also skip when an IME
+  // composition (zh/en candidate) is in flight.
+  const handleKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLElement) {
+      const tag = e.target.tagName
+      if (tag === 'TEXTAREA') return
+      if (e.nativeEvent.isComposing) return
+      e.preventDefault()
+      formRef.current?.requestSubmit()
+    }
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -107,16 +134,25 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
       title={task ? '编辑任务' : '新建任务'}
       onClose={onClose}
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        onKeyDown={handleKeyDown}
+        className="space-y-5 pb-2"
+      >
         {/* Title */}
         <div>
           <label className="helm-label block mb-2">
             标题
           </label>
           <input
+            ref={titleRef}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            inputMode="text"
+            enterKeyHint="done"
+            autoComplete="off"
             className="w-full px-3 py-2 bg-surface border border-border text-ink font-sans text-sm focus:border-accent focus:outline-none rounded-lg transition-colors duration-200 ease-snappy"
             placeholder="输入任务标题..."
             maxLength={50}
@@ -199,42 +235,51 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
           />
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          {task && !showDeleteConfirm && (
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="font-mono text-[10px] text-danger hover:text-danger/80 uppercase tracking-wider transition-colors duration-200 ease-snappy"
-            >
-              删除
-            </button>
-          )}
-
-          {showDeleteConfirm && (
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] text-ink-muted uppercase tracking-wider">
-                确认删除？
-              </span>
+        {/* Actions — sticky so submit stays reachable when the soft keyboard
+            covers the lower half of the screen on mobile. Layout: two fixed-
+            width slots (left: delete/confirm, right: cancel + submit) so the
+            submit button can never wrap or get clipped on narrow viewports. */}
+        <div className="sticky bottom-0 -mx-4 sm:-mx-6 mt-4 px-4 sm:px-6 py-3 bg-surface/95 backdrop-blur-sm border-t border-border flex items-center gap-2">
+          {/* Left slot — fixed width, prevents the right slot from being
+              pushed off-screen by justify-between / flex-wrap. */}
+          <div className="flex items-center gap-2 min-w-0 flex-shrink">
+            {task && !showDeleteConfirm && (
               <button
                 type="button"
-                onClick={handleDelete}
-                disabled={loading}
-                className="px-2 py-1 bg-danger text-white font-mono text-[10px] uppercase tracking-wider hover:bg-danger/90 disabled:opacity-50 rounded-md transition-all duration-200 ease-snappy"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="font-mono text-[10px] text-danger hover:text-danger/80 uppercase tracking-wider transition-colors duration-200 ease-snappy"
               >
-                是
+                删除
               </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-2 py-1 bg-surface border border-border text-ink font-mono text-[10px] uppercase tracking-wider hover:border-border-strong rounded-md transition-all duration-200 ease-snappy"
-              >
-                否
-              </button>
-            </div>
-          )}
+            )}
 
-          <div className="flex gap-2 ml-auto">
+            {showDeleteConfirm && (
+              <>
+                <span className="font-mono text-[10px] text-ink-muted uppercase tracking-wider whitespace-nowrap">
+                  确认删除?
+                </span>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="px-2 py-1 bg-danger text-white font-mono text-[10px] uppercase tracking-wider hover:bg-danger/90 disabled:opacity-50 rounded-md transition-all duration-200 ease-snappy"
+                >
+                  是
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-2 py-1 bg-surface border border-border text-ink font-mono text-[10px] uppercase tracking-wider hover:border-border-strong rounded-md transition-all duration-200 ease-snappy"
+                >
+                  否
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Right slot — pushed to the far right with ml-auto. Buttons keep
+              natural width via flex-shrink-0 so the create button never clips. */}
+          <div className="flex gap-2 ml-auto flex-shrink-0">
             <Button variant="secondary" onClick={onClose} disabled={loading}>
               取消
             </Button>

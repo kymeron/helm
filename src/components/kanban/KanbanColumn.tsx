@@ -44,7 +44,10 @@ function KanbanColumn({ status, title, tasks, onEditTask, onDeleteTask, onViewTa
       style={{ borderColor: 'rgba(94, 234, 212, 0.12)' }}
     >
       {/* Column Header */}
-      <div className="px-3 py-2.5 border-b border-border">
+      <div
+        className="px-3 py-2.5 border-b border-border cursor-pointer select-none"
+        onDoubleClick={() => onCreateTask(status)}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`w-1.5 h-1.5 rounded-full ${accent.dot}`} />

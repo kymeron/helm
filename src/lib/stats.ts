@@ -97,25 +97,49 @@ export function computeTypeDistribution(tasks: Task[]): TypeDistribution[] {
 }
 
 /**
- * Compute activity heatmap data (last 12 weeks).
+ * Compute activity heatmap data for the past 53 weeks (GitHub-style).
  * Counts tasks created or completed on each day.
+ * Returns days from the Sunday 52 weeks before this week's Saturday
+ * (inclusive), so weeks align to Sunday and total exactly 53 weeks.
  * @param tasks All tasks
  * @param now Reference time (defaults to current time)
  */
 export function computeHeatmapData(tasks: Task[], now: Date = new Date()): HeatmapDay[] {
-  const days: HeatmapDay[] = []
-  const totalDays = 84 // 12 weeks
+  const today = new Date(now)
+  today.setUTCHours(0, 0, 0, 0)
 
-  for (let i = totalDays - 1; i >= 0; i--) {
-    const date = new Date(now)
-    date.setUTCDate(date.getUTCDate() - i)
+  // Anchor to the Sunday at the start of today's week.
+  const thisWeekSunday = new Date(today)
+  thisWeekSunday.setUTCDate(today.getUTCDate() - today.getUTCDay())
+
+  // End: Saturday of the current week (keeps the rightmost column at 7 cells).
+  const endDate = new Date(thisWeekSunday)
+  endDate.setUTCDate(thisWeekSunday.getUTCDate() + 6)
+
+  // Start: 52 weeks before this week's Sunday → exactly 53 weeks of data.
+  const startDate = new Date(thisWeekSunday)
+  startDate.setUTCDate(thisWeekSunday.getUTCDate() - 52 * 7)
+
+  // 53 weeks = 371 days.
+  const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+
+  const days: HeatmapDay[] = []
+  for (let i = 0; i < totalDays; i++) {
+    const date = new Date(startDate)
+    date.setUTCDate(startDate.getUTCDate() + i)
     const dateStr = date.toISOString().slice(0, 10)
 
-    const count = tasks.filter((t) => {
-      const created = t.createdAt.slice(0, 10)
-      const completed = t.completedAt?.slice(0, 10)
-      return created === dateStr || completed === dateStr
-    }).length
+    // Future days in the current week stay at 0 but are still rendered
+    // (styled as empty cells, matching GitHub).
+    const isFuture = date.getTime() > today.getTime()
+
+    const count = isFuture
+      ? 0
+      : tasks.filter((t) => {
+          const created = t.createdAt.slice(0, 10)
+          const completed = t.completedAt?.slice(0, 10)
+          return created === dateStr || completed === dateStr
+        }).length
 
     days.push({ date: dateStr, count })
   }

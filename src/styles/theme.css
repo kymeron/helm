@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   HELM · Design System
+   Neutral warm dark · Teal accent · Source Han Serif
+   ============================================ */
+
+:root {
+  --bg-0: #0a0b0d;
+  --bg-1: #0f1115;
+  --bg-2: #14171a;
+  --bg-3: #1a1f23;
+  --border: rgba(255, 255, 255, 0.05);
+  --border-strong: rgba(255, 255, 255, 0.1);
+  --text-0: #ebedf0;
+  --text-1: #9ca3af;
+  --text-2: #6b7280;
+  --accent: #5eead4;
+  --accent-dim: #1a3a38;
+  --idea: #6bc5e8;
+  --issue: #b0a8e0;
+  --exploration: #e8a0aa;
+  --warning: #fbbf24;
+  --font-serif: 'Noto Serif SC', 'Source Han Serif SC', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+}
+
+body {
+  font-family: var(--font-serif);
+  background-color: var(--bg-0);
+  color: var(--text-0);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Subtle dot grid + ambient teal glow */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(94, 234, 212, 0.025), transparent),
+    radial-gradient(circle, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px;
+  background-repeat: no-repeat, repeat;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   Component Classes
+   ============================================ */
+
+/* Card */
+.helm-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.helm-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Card hover glow — soft teal halo */
+.helm-card-glow:hover {
+  border-color: rgba(94, 234, 212, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(94, 234, 212, 0.1),
+    0 0 28px rgba(94, 234, 212, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Column drop target */
+.drop-target-active {
+  border-color: rgba(94, 234, 212, 0.3) !important;
+  box-shadow:
+    0 0 0 1px rgba(94, 234, 212, 0.1),
+    0 0 24px rgba(94, 234, 212, 0.05) !important;
+}
+
+/* Label — mono, precise */
+.helm-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+}
+
+/* Value — mono, tabular */
+.helm-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Type badge — harmonized rgba tints */
+.type-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.type-badge.idea { background: rgba(107, 197, 232, 0.12); color: var(--idea); }
+.type-badge.issue { background: rgba(176, 168, 224, 0.12); color: var(--issue); }
+.type-badge.exploration { background: rgba(232, 160, 170, 0.12); color: var(--exploration); }
+
+/* Chip */
+.helm-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-1);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.helm-chip:hover { border-color: var(--border-strong); }
+.helm-chip.active { color: var(--text-0); border-color: var(--border-strong); background: var(--bg-3); }
+
+/* ============================================
+   Scrollbar
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(94, 234, 212, 0.25);
+}
+
+/* Focus Ring */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Selection */
+::selection {
+  background: rgba(94, 234, 212, 0.18);
+  color: #FFFFFF;
+}
+
+/* Native select dropdown */
+select option {
+  background: #0f1115;
+  color: #ebedf0;
+}

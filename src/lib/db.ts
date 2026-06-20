@@ -205,6 +205,7 @@ function daysAgo(n: number): string {
 }
 
 interface SeedTask {
+  id: string           // Fixed UUID — makes seeding idempotent (put = upsert)
   title: string
   description: string
   type: TaskType
@@ -217,15 +218,15 @@ interface SeedTask {
 
 const seedTasks: SeedTask[] = [
   // --- Todo ---
-  { title: '添加 JSON 导入功能', description: '从 JSON 文件恢复任务,作为本地持久化的最后兜底。', type: 'idea', status: 'todo', priority: 'high', tags: ['feature'], createdDaysAgo: 2 },
-  { title: '修复移动端新建按钮溢出', description: '当软键盘弹出时提交按钮会被遮挡。', type: 'issue', status: 'todo', priority: 'medium', tags: ['bug', 'mobile'], createdDaysAgo: 1 },
+  { id: 'seed-0001-0000-0000-000000000001', title: '添加 JSON 导入功能', description: '从 JSON 文件恢复任务,作为本地持久化的最后兜底。', type: 'idea', status: 'todo', priority: 'high', tags: ['feature'], createdDaysAgo: 2 },
+  { id: 'seed-0001-0000-0000-000000000002', title: '修复移动端新建按钮溢出', description: '当软键盘弹出时提交按钮会被遮挡。', type: 'issue', status: 'todo', priority: 'medium', tags: ['bug', 'mobile'], createdDaysAgo: 1 },
 
   // --- In Progress ---
-  { title: '重构活动热力图配色', description: '使色阶与项目主题一致,GitHub 风格 + teal 主色。', type: 'exploration', status: 'in_progress', priority: 'medium', tags: ['ui'], createdDaysAgo: 5 },
+  { id: 'seed-0001-0000-0000-000000000003', title: '重构活动热力图配色', description: '使色阶与项目主题一致,GitHub 风格 + teal 主色。', type: 'exploration', status: 'in_progress', priority: 'medium', tags: ['ui'], createdDaysAgo: 5 },
 
   // --- Done ---
-  { title: '搭建局域网同步层', description: '基于 Vite 插件的 WebSocket hub,tombstone 实现删除同步。', type: 'idea', status: 'done', priority: 'high', tags: ['sync'], createdDaysAgo: 12, completedDaysAgo: 2 },
-  { title: '适配移动端布局', description: 'TopBar / Modal / Kanban 全部响应式化。', type: 'idea', status: 'done', priority: 'medium', tags: ['mobile', 'responsive'], createdDaysAgo: 8, completedDaysAgo: 1 },
+  { id: 'seed-0001-0000-0000-000000000004', title: '搭建局域网同步层', description: '基于 Vite 插件的 WebSocket hub,tombstone 实现删除同步。', type: 'idea', status: 'done', priority: 'high', tags: ['sync'], createdDaysAgo: 12, completedDaysAgo: 2 },
+  { id: 'seed-0001-0000-0000-000000000005', title: '适配移动端布局', description: 'TopBar / Modal / Kanban 全部响应式化。', type: 'idea', status: 'done', priority: 'medium', tags: ['mobile', 'responsive'], createdDaysAgo: 8, completedDaysAgo: 1 },
 ]
 
 export async function seedIfEmpty(): Promise<void> {
@@ -239,7 +240,7 @@ export async function seedIfEmpty(): Promise<void> {
     const completedAt = seed.completedDaysAgo != null ? daysAgo(seed.completedDaysAgo) : null
 
     const task: Task = {
-      id: uuid(),
+      id: seed.id,
       title: seed.title,
       description: seed.description,
       type: seed.type,

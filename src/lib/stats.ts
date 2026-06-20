@@ -35,7 +35,9 @@ export interface TrendDay {
 
 export interface HeatmapDay {
   date: string // YYYY-MM-DD
-  count: number
+  count: number // total activity (created + completed)
+  created: number // tasks created on this day
+  completed: number // tasks completed on this day
 }
 
 /**
@@ -133,15 +135,16 @@ export function computeHeatmapData(tasks: Task[], now: Date = new Date()): Heatm
     // (styled as empty cells, matching GitHub).
     const isFuture = date.getTime() > today.getTime()
 
-    const count = isFuture
-      ? 0
-      : tasks.filter((t) => {
-          const created = t.createdAt.slice(0, 10)
-          const completed = t.completedAt?.slice(0, 10)
-          return created === dateStr || completed === dateStr
-        }).length
+    let created = 0
+    let completed = 0
+    if (!isFuture) {
+      for (const t of tasks) {
+        if (t.createdAt.slice(0, 10) === dateStr) created += 1
+        if (t.completedAt && t.completedAt.slice(0, 10) === dateStr) completed += 1
+      }
+    }
 
-    days.push({ date: dateStr, count })
+    days.push({ date: dateStr, count: created + completed, created, completed })
   }
 
   return days

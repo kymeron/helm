@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { HeatmapDay } from '@/lib/stats'
 
 interface ActivityHeatmapProps {
@@ -50,10 +50,31 @@ const LEVEL_COLORS = [
 interface Cell {
   date: string
   count: number
+  created: number
+  completed: number
   level: number // 0-4 visible; -1 = padding (before data range)
 }
 
+interface HoverState {
+  cell: Cell
+  // Mouse position in viewport coords (used for fixed-position tooltip).
+  clientX: number
+  clientY: number
+}
+
+function formatChineseDate(dateStr: string): string {
+  // YYYY-MM-DD → "M月D日 · 周X"
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return dateStr
+  const month = d.getUTCMonth() + 1
+  const day = d.getUTCDate()
+  const dow = DAY_LABELS[d.getUTCDay()] ?? ''
+  return `${month}月${day}日 · 周${dow}`
+}
+
 function ActivityHeatmap({ data }: ActivityHeatmapProps) {
+  const [hover, setHover] = useState<HoverState | null>(null)
+
   const maxCount = useMemo(
     () => Math.max(1, ...data.map((d) => d.count)),
     [data],
@@ -73,7 +94,13 @@ function ActivityHeatmap({ data }: ActivityHeatmapProps) {
         else if (ratio > 0.25) level = 2
         else level = 1
       }
-      return { date: d.date, count: d.count, level }
+      return {
+        date: d.date,
+        count: d.count,
+        created: d.created,
+        completed: d.completed,
+        level,
+      }
     })
 
     const firstDate = new Date(firstDay.date)
@@ -81,6 +108,8 @@ function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     const padding: Cell[] = Array.from({ length: firstDayOfWeek }, () => ({
       date: '',
       count: 0,
+      created: 0,
+      completed: 0,
       level: -1,
     }))
 
@@ -89,7 +118,7 @@ function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     for (let i = 0; i < allCells.length; i += 7) {
       const week = allCells.slice(i, i + 7)
       while (week.length < 7) {
-        week.push({ date: '', count: 0, level: -1 })
+        week.push({ date: '', count: 0, created: 0, completed: 0, level: -1 })
       }
       weeksArr.push(week)
     }
@@ -186,9 +215,22 @@ function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                     rx={CELL_RADIUS}
                     fill={fill}
                     className="transition-opacity hover:opacity-70 cursor-default"
-                  >
-                    <title>{`${cell.date} · ${cell.count} 次活动`}</title>
-                  </rect>
+                    onMouseEnter={(e) =>
+                      setHover({
+                        cell,
+                        clientX: e.clientX,
+                        clientY: e.clientY,
+                      })
+                    }
+                    onMouseMove={(e) =>
+                      setHover((prev) =>
+                        prev && prev.cell === cell
+                          ? { cell, clientX: e.clientX, clientY: e.clientY }
+                          : prev,
+                      )
+                    }
+                    onMouseLeave={() => setHover(null)}
+                  />
                 )
               }),
             )}
@@ -206,12 +248,43 @@ function ActivityHeatmap({ data }: ActivityHeatmapProps) {
         ))}
         <span className="text-[9px] font-mono text-ink-muted">多</span>
       </div>
+
+      {/* Hover tooltip — fixed-position so it escapes any overflow:auto
+          scroll container, anchored above the cursor. Hidden when no cell
+          is hovered. */}
+      {hover && (
+        <div
+          role="tooltip"
+          className="fixed z-50 pointer-events-none rounded-md shadow-soft-lg border border-border-strong bg-bg-1 px-3 py-2 text-[11px] font-mono min-w-[140px]"
+          style={{
+            left: `${hover.clientX}px`,
+            top: `${hover.clientY}px`,
+            transform: 'translate(-50%, calc(-100% - 14px))',
+          }}
+        >
+          <div className="text-ink-secondary text-[10px] mb-1.5 tracking-wide">
+            {formatChineseDate(hover.cell.date)}
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-ink-secondary">新增</span>
+            <span className="text-ink font-semibold tabular-nums">
+              {hover.cell.created}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 mt-1">
+            <span className="text-ink-secondary">完成</span>
+            <span className="text-accent font-semibold tabular-nums">
+              {hover.cell.completed}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   )
 
   return (
     <div
-      className="helm-card p-3 rounded-md animate-slide-up flex flex-col"
+      className="helm-card p-3 rounded-md animate-slide-up flex flex-col relative"
       style={{ animationDelay: '160ms', borderColor: 'rgba(94, 234, 212, 0.12)' }}
     >
       <div className="flex items-center justify-between mb-1 shrink-0">

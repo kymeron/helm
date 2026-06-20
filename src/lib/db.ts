@@ -217,28 +217,15 @@ interface SeedTask {
 
 const seedTasks: SeedTask[] = [
   // --- Todo ---
-  { title: 'Design landing page hero section', description: 'Create a bold hero with animated gradient mesh background and CTA.', type: 'idea', status: 'todo', priority: 'high', tags: ['design', 'frontend'], createdDaysAgo: 2 },
-  { title: 'Fix memory leak in chart renderer', description: 'ECharts instances not being disposed on unmount.', type: 'issue', status: 'todo', priority: 'medium', tags: ['bug', 'performance'], createdDaysAgo: 3 },
-  { title: 'Research WebGPU for data visualization', description: 'Evaluate if WebGPU can replace Canvas for large datasets.', type: 'exploration', status: 'todo', priority: 'low', tags: ['research', 'graphics'], createdDaysAgo: 5 },
-  { title: 'Add keyboard shortcuts palette', description: 'Cmd+K to open command palette for quick task actions.', type: 'idea', status: 'todo', priority: 'medium', tags: ['ux', 'feature'], createdDaysAgo: 1 },
-  { title: 'API rate limit hitting 429 errors', description: 'GitHub API calls exceeding 5000/hour limit during sync.', type: 'issue', status: 'todo', priority: 'high', tags: ['backend', 'urgent'], createdDaysAgo: 4 },
-  { title: 'Evaluate Tailwind v4 migration', description: 'Assess breaking changes and benefits of upgrading.', type: 'exploration', status: 'todo', priority: 'medium', tags: ['tooling', 'research'], createdDaysAgo: 6 },
+  { title: '添加 JSON 导入功能', description: '从 JSON 文件恢复任务,作为本地持久化的最后兜底。', type: 'idea', status: 'todo', priority: 'high', tags: ['feature'], createdDaysAgo: 2 },
+  { title: '修复移动端新建按钮溢出', description: '当软键盘弹出时提交按钮会被遮挡。', type: 'issue', status: 'todo', priority: 'medium', tags: ['bug', 'mobile'], createdDaysAgo: 1 },
 
   // --- In Progress ---
-  { title: 'Build task export to Notion', description: 'Sync completed tasks to Notion database via API.', type: 'idea', status: 'in_progress', priority: 'high', tags: ['integration', 'feature'], createdDaysAgo: 8 },
-  { title: 'Resolve flaky E2E tests', description: 'Playwright tests failing intermittently on CI.', type: 'issue', status: 'in_progress', priority: 'medium', tags: ['testing', 'ci'], createdDaysAgo: 7 },
-  { title: 'Explore vector search for task search', description: 'Use embeddings for semantic task search.', type: 'exploration', status: 'in_progress', priority: 'low', tags: ['ai', 'research'], createdDaysAgo: 10 },
-  { title: 'Dark mode toggle persistence', description: 'Theme preference not saved to localStorage.', type: 'idea', status: 'in_progress', priority: 'medium', tags: ['ux', 'bug'], createdDaysAgo: 5 },
-  { title: 'Optimize IndexedDB batch writes', description: 'Batch create/update operations to reduce transactions.', type: 'issue', status: 'in_progress', priority: 'high', tags: ['performance', 'backend'], createdDaysAgo: 9 },
+  { title: '重构活动热力图配色', description: '使色阶与项目主题一致,GitHub 风格 + teal 主色。', type: 'exploration', status: 'in_progress', priority: 'medium', tags: ['ui'], createdDaysAgo: 5 },
 
   // --- Done ---
-  { title: 'Set up CI/CD pipeline', description: 'GitHub Actions for lint, test, build, and deploy.', type: 'idea', status: 'done', priority: 'medium', tags: ['devops'], createdDaysAgo: 12, completedDaysAgo: 2 },
-  { title: 'Fix authentication redirect loop', description: 'OAuth callback redirecting infinitely after login.', type: 'issue', status: 'done', priority: 'high', tags: ['bug', 'auth'], createdDaysAgo: 15, completedDaysAgo: 3 },
-  { title: 'Document API endpoints', description: 'Write OpenAPI spec for all REST endpoints.', type: 'exploration', status: 'done', priority: 'low', tags: ['docs'], createdDaysAgo: 18, completedDaysAgo: 5 },
-  { title: 'Implement task drag-and-drop', description: 'DnD-kit sortable columns with drag overlay.', type: 'idea', status: 'done', priority: 'medium', tags: ['feature', 'ux'], createdDaysAgo: 10, completedDaysAgo: 1 },
-  { title: 'Resolve CSS specificity conflicts', description: 'Tailwind utilities overridden by base styles.', type: 'issue', status: 'done', priority: 'medium', tags: ['css', 'bug'], createdDaysAgo: 20, completedDaysAgo: 6 },
-  { title: 'Add favicon and meta tags', description: 'SVG favicon and Open Graph tags for sharing.', type: 'idea', status: 'done', priority: 'low', tags: ['polish'], createdDaysAgo: 14, completedDaysAgo: 4 },
-  { title: 'Profile React render performance', description: 'Identify unnecessary re-renders with DevTools profiler.', type: 'exploration', status: 'done', priority: 'medium', tags: ['performance'], createdDaysAgo: 22, completedDaysAgo: 7 },
+  { title: '搭建局域网同步层', description: '基于 Vite 插件的 WebSocket hub,tombstone 实现删除同步。', type: 'idea', status: 'done', priority: 'high', tags: ['sync'], createdDaysAgo: 12, completedDaysAgo: 2 },
+  { title: '适配移动端布局', description: 'TopBar / Modal / Kanban 全部响应式化。', type: 'idea', status: 'done', priority: 'medium', tags: ['mobile', 'responsive'], createdDaysAgo: 8, completedDaysAgo: 1 },
 ]
 
 export async function seedIfEmpty(): Promise<void> {

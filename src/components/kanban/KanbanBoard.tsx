@@ -7,7 +7,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  closestCorners,
+  pointerWithin,
+  type CollisionDetection,
 } from '@dnd-kit/core'
 import { KanbanColumn } from '@/components/kanban/KanbanColumn'
 import { TaskCard } from '@/components/kanban/TaskCard'
@@ -35,6 +37,20 @@ function KanbanBoard({ onEditTask, onDeleteTask, onViewTask }: KanbanBoardProps)
       },
     })
   )
+
+  // 自定义碰撞检测：优先按指针所在区域命中，解决空列被"跳过"的问题。
+  // closestCenter 会计算到各 droppable 中心的 2D 距离，空列中心偏远时
+  // 会被相邻列的卡片"抢走"目标，导致拖不进空列。
+  const collisionDetection: CollisionDetection = (args) => {
+    // 1. 指针落在某个 droppable 内部时直接命中（列或卡片均可）
+    const pointerCollisions = pointerWithin(args)
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions
+    }
+    // 2. 指针落在列间缝隙时，用 closestCorners 兜底（比 closestCenter
+    //    对空列更友好，按四角距离判断）
+    return closestCorners(args)
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
@@ -111,7 +127,7 @@ function KanbanBoard({ onEditTask, onDeleteTask, onViewTask }: KanbanBoardProps)
       {/* Board Columns */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={collisionDetection}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >

@@ -1,5 +1,4 @@
-import { useShallow } from 'zustand/react/shallow'
-import { useTasksStore, useUIStore, selectActiveTasks } from '@/store'
+import { useUIStore } from '@/store'
 import type { TaskType, Priority, SortKey } from '@/types/task'
 
 const typeOptions: { value: TaskType | 'all'; label: string }[] = [
@@ -23,24 +22,17 @@ const sortKeyOptions: { value: SortKey; label: string }[] = [
 ]
 
 function FilterBar() {
-  const tasks = useTasksStore(useShallow(selectActiveTasks))
   const filters = useUIStore((s) => s.filters)
   const setFilterType = useUIStore((s) => s.setFilterType)
   const setFilterPriority = useUIStore((s) => s.setFilterPriority)
-  const setFilterTag = useUIStore((s) => s.setFilterTag)
   const clearFilters = useUIStore((s) => s.clearFilters)
   const sortKey = useUIStore((s) => s.sortKey)
   const sortOrder = useUIStore((s) => s.sortOrder)
   const setSort = useUIStore((s) => s.setSort)
 
-  const availableTags = Array.from(
-    new Set(tasks.flatMap((t) => t.tags))
-  ).sort()
-
   const hasActiveFilters =
     filters.type !== 'all' ||
-    filters.priority !== 'all' ||
-    filters.tag !== null
+    filters.priority !== 'all'
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 p-1">
@@ -70,21 +62,6 @@ function FilterBar() {
         {priorityOptions.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
-          </option>
-        ))}
-      </select>
-
-      {/* Tag Filter */}
-      <select
-        value={filters.tag ?? ''}
-        onChange={(e) => setFilterTag(e.target.value || null)}
-        className="bg-bg-2 px-2 py-1 font-mono text-[10px] text-ink-secondary focus:text-ink focus:outline-none rounded-md transition-colors duration-200 ease-snappy"
-        disabled={availableTags.length === 0}
-      >
-        <option value="">全部标签</option>
-        {availableTags.map((tag) => (
-          <option key={tag} value={tag}>
-            #{tag}
           </option>
         ))}
       </select>

@@ -34,49 +34,41 @@ describe('filters', () => {
     ]
 
     it('returns all tasks when filters are "all"', () => {
-      const filters: Filters = { type: 'all', priority: 'all', tag: null }
+      const filters: Filters = { type: 'all', priority: 'all' }
       const result = applyFilters(tasks, filters)
       expect(result).toHaveLength(3)
     })
 
     it('filters by type (type is a tag)', () => {
-      const filters: Filters = { type: 'idea', priority: 'all', tag: null }
+      const filters: Filters = { type: 'idea', priority: 'all' }
       const result = applyFilters(tasks, filters)
       expect(result).toHaveLength(1)
       expect(result[0]!.tags.includes('idea')).toBe(true)
     })
 
     it('filters by priority', () => {
-      const filters: Filters = { type: 'all', priority: 'high', tag: null }
+      const filters: Filters = { type: 'all', priority: 'high' }
       const result = applyFilters(tasks, filters)
       expect(result).toHaveLength(1)
       expect(result[0]!.priority).toBe('high')
     })
 
-    it('filters by tag', () => {
-      const filters: Filters = { type: 'all', priority: 'all', tag: 'work' }
-      const result = applyFilters(tasks, filters)
-      expect(result).toHaveLength(2)
-      expect(result.every(t => t.tags.includes('work'))).toBe(true)
-    })
-
     it('combines filters (AND relationship)', () => {
-      const filters: Filters = { type: 'exploration', priority: 'low', tag: 'work' }
+      const filters: Filters = { type: 'exploration', priority: 'low' }
       const result = applyFilters(tasks, filters)
       expect(result).toHaveLength(1)
       expect(result[0]!.tags.includes('exploration')).toBe(true)
       expect(result[0]!.priority).toBe('low')
-      expect(result[0]!.tags.includes('work')).toBe(true)
     })
 
     it('returns empty array when no match', () => {
-      const filters: Filters = { type: 'idea', priority: 'low', tag: null }
+      const filters: Filters = { type: 'idea', priority: 'low' }
       const result = applyFilters(tasks, filters)
       expect(result).toHaveLength(0)
     })
 
     it('handles empty tasks array', () => {
-      const filters: Filters = { type: 'all', priority: 'all', tag: null }
+      const filters: Filters = { type: 'all', priority: 'all' }
       const result = applyFilters([], filters)
       expect(result).toHaveLength(0)
     })

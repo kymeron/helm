@@ -21,11 +21,6 @@ export function applyFilters(tasks: Task[], filters: Filters): Task[] {
       return false
     }
 
-    // Tag filter
-    if (filters.tag !== null && !task.tags.includes(filters.tag)) {
-      return false
-    }
-
     return true
   })
 }

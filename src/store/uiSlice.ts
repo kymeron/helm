@@ -23,7 +23,6 @@ interface UIState {
 interface UIActions {
   setFilterType: (type: TaskType | 'all') => void
   setFilterPriority: (priority: Priority | 'all') => void
-  setFilterTag: (tag: string | null) => void
   clearFilters: () => void
   setSort: (key: SortKey, order: SortOrder) => void
   setTimeRange: (range: TimeRange) => void
@@ -39,7 +38,6 @@ export type UIStore = UIState & UIActions
 const DEFAULT_FILTERS: Filters = {
   type: 'all',
   priority: 'all',
-  tag: null,
 }
 
 export const useUIStore = create<UIStore>()(
@@ -57,13 +55,10 @@ export const useUIStore = create<UIStore>()(
 
       setFilterType: (type) =>
         set((state) => ({ filters: { ...state.filters, type } })),
-      
+
       setFilterPriority: (priority) =>
         set((state) => ({ filters: { ...state.filters, priority } })),
-      
-      setFilterTag: (tag) =>
-        set((state) => ({ filters: { ...state.filters, tag } })),
-      
+
       clearFilters: () => set({ filters: DEFAULT_FILTERS }),
       
       setSort: (key, order) => set({ sortKey: key, sortOrder: order }),

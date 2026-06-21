@@ -56,7 +56,6 @@ export type SortOrder = 'asc' | 'desc'
 export interface Filters {
   type: TaskType | 'all'
   priority: Priority | 'all'
-  tag: string | null
 }
 
 export interface HelmExport {

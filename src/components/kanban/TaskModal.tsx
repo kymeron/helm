@@ -2,13 +2,20 @@ import { useState, useEffect, useRef, type FormEvent, type KeyboardEvent } from 
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useTasksStore, useUIStore } from '@/store'
-import type { Task, TaskInput, Priority } from '@/types/task'
+import { getTaskType, TYPE_TAGS } from '@/types/task'
+import type { Task, TaskInput, TaskType, Priority } from '@/types/task'
 
 interface TaskModalProps {
   open: boolean
   task: Task | null
   onClose: () => void
 }
+
+const tagOptions: { value: TaskType; label: string }[] = [
+  { value: 'idea', label: '想法' },
+  { value: 'issue', label: '疑问' },
+  { value: 'exploration', label: '探索' },
+]
 
 const priorityOptions: { value: Priority; label: string }[] = [
   { value: 'low', label: '低' },
@@ -25,9 +32,8 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [selectedTag, setSelectedTag] = useState<TaskType | null>('idea')
   const [priority, setPriority] = useState<Priority>('medium')
-  const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
@@ -38,15 +44,14 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
     if (task) {
       setTitle(task.title)
       setDescription(task.description)
+      setSelectedTag(getTaskType(task.tags))
       setPriority(task.priority)
-      setTags(task.tags)
     } else {
       setTitle('')
       setDescription('')
+      setSelectedTag('idea')
       setPriority('medium')
-      setTags([])
     }
-    setTagInput('')
     setShowDeleteConfirm(false)
   }, [task, open])
 
@@ -74,49 +79,22 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
     }
   }
 
-  const commitTagInput = () => {
-    const parsed = tagInput
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0)
-    if (parsed.length === 0) return
-    // 去重追加
-    setTags((prev) => [...prev, ...parsed.filter((t) => !prev.includes(t))])
-    setTagInput('')
-  }
-
-  const removeTag = (tag: string) => {
-    setTags((prev) => prev.filter((t) => t !== tag))
-  }
-
-  const handleTagInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      e.stopPropagation() // 阻止冒泡到 form 的 handleKeyDown 导致提前提交
-      commitTagInput()
-    } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
-      // 空输入时 Backspace 删除最后一个标签
-      removeTag(tags[tags.length - 1]!)
-    }
-  }
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
     if (!title.trim()) return
 
-    // 提交前把输入框中未提交的标签一并收入
-    const finalTags = tagInput.trim()
-      ? [...tags, ...tagInput.split(',').map((t) => t.trim()).filter((t) => t.length > 0 && !tags.includes(t))]
-      : tags
-
     setLoading(true)
 
+    // 类型标签 + 保留编辑时原有的非类型标签
+    const existingNonTypeTags = task
+      ? task.tags.filter((t) => !TYPE_TAGS.includes(t as TaskType))
+      : []
     const input: TaskInput = {
       title: title.trim(),
       description: description.trim(),
       priority,
-      tags: finalTags,
+      tags: [...(selectedTag ? [selectedTag] : []), ...existingNonTypeTags],
     }
 
     try {
@@ -198,34 +176,27 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
           />
         </div>
 
-        {/* Tags — 按原类型按钮样式展示，点击删除 */}
+        {/* Tags — 与类型/优先级相同的按钮样式 */}
         <div>
           <label className="helm-label block mb-2">
             标签
           </label>
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {tags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => removeTag(tag)}
-                  className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider border rounded-lg bg-accent/8 border-accent text-accent transition-all duration-200 ease-snappy hover:bg-danger/10 hover:border-danger hover:text-danger"
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          )}
-          <input
-            type="text"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleTagInputKeyDown}
-            onBlur={commitTagInput}
-            className="w-full px-3 py-2 bg-surface border border-border text-ink font-sans text-sm focus:border-accent focus:outline-none rounded-lg transition-colors duration-200 ease-snappy"
-            placeholder="输入标签后回车添加..."
-          />
+          <div className="flex gap-2">
+            {tagOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSelectedTag(selectedTag === opt.value ? null : opt.value)}
+                className={`flex-1 px-3 py-2 font-mono text-[10px] uppercase tracking-wider border rounded-lg transition-all duration-200 ease-snappy ${
+                  selectedTag === opt.value
+                    ? 'bg-accent/8 border-accent text-accent'
+                    : 'bg-surface border-border text-ink-muted hover:border-border-strong'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Priority — 移到最下面 */}

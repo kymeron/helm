@@ -1,6 +1,6 @@
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { getTaskType } from '@/types/task'
+import { getTaskType, getTagLabel, TYPE_LABELS } from '@/types/task'
 import type { Task, TaskType, TaskStatus, Priority } from '@/types/task'
 
 interface TaskDetailModalProps {
@@ -8,12 +8,6 @@ interface TaskDetailModalProps {
   task: Task | null
   onClose: () => void
   onEdit: (task: Task) => void
-}
-
-const typeLabels: Record<TaskType, string> = {
-  idea: '想法',
-  issue: '疑问',
-  exploration: '探索',
 }
 
 const typeColors: Record<TaskType, string> = {
@@ -107,7 +101,7 @@ function TaskDetailModal({ open, task, onClose, onEdit }: TaskDetailModalProps) 
                   color: typeColors[taskType],
                 }}
               >
-                {typeLabels[taskType]}
+                {TYPE_LABELS[taskType]}
               </span>
             ) : (
               <span className="font-mono text-xs text-ink-muted">未分类</span>
@@ -131,7 +125,7 @@ function TaskDetailModal({ open, task, onClose, onEdit }: TaskDetailModalProps) 
                   key={tag}
                   className="font-mono text-[10px] text-ink-secondary px-2 py-0.5 bg-bg-2 border border-border rounded-full"
                 >
-                  {tag}
+                  {getTagLabel(tag)}
                 </span>
               ))}
             </div>

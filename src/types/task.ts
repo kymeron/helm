@@ -23,6 +23,22 @@ export function getTaskType(tags: string[]): TaskType | null {
   return null
 }
 
+/**
+ * 类型标签的中文显示名。
+ */
+export const TYPE_LABELS: Record<TaskType, string> = {
+  idea: '想法',
+  issue: '疑问',
+  exploration: '探索',
+}
+
+/**
+ * 获取标签的显示名。类型标签返回中文，其他标签原样返回。
+ */
+export function getTagLabel(tag: string): string {
+  return TYPE_LABELS[tag as TaskType] ?? tag
+}
+
 export interface Task {
   id: string
   title: string

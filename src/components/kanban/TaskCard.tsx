@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useMemo } from 'react'
 import { Badge, getPriorityBadgeVariant } from '@/components/ui/Badge'
-import { getTaskType } from '@/types/task'
+import { getTaskType, getTagLabel } from '@/types/task'
 import type { Task, Priority } from '@/types/task'
 
 interface TaskCardProps {
@@ -113,7 +113,7 @@ function TaskCard({ task, onEdit, onDelete, onView }: TaskCardProps) {
                 key={tag}
                 className="font-mono text-[9px] text-ink-secondary px-1.5 py-0.5 bg-bg-2 border border-border rounded-full"
               >
-                {tag}
+                {getTagLabel(tag)}
               </span>
             ))}
             {task.tags.length > 3 && (

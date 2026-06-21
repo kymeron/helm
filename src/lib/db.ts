@@ -77,8 +77,14 @@ function getDB(): Promise<IDBPDatabase<HelmDB>> {
         // 字段与 by-type 索引。类型本身也是标签（见 TYPE_TAGS）。
         if (oldVersion < 2) {
           const store = transaction.objectStore('tasks')
-          if (store.indexNames.contains('by-type')) {
-            store.deleteIndex('by-type')
+          // by-type 索引在 v2 schema 中已移除，这里清理旧索引。
+          // 迁移代码需操作 v1 遗留结构，绕过 idb 的类型收窄。
+          const legacy = store as unknown as {
+            indexNames: { contains(name: string): boolean }
+            deleteIndex(name: string): void
+          }
+          if (legacy.indexNames.contains('by-type')) {
+            legacy.deleteIndex('by-type')
           }
           store.openCursor().then(async function process(cursor) {
             if (!cursor) return
@@ -87,7 +93,7 @@ function getDB(): Promise<IDBPDatabase<HelmDB>> {
               if (!task.tags.includes(task.type)) {
                 task.tags = [...task.tags, task.type]
               }
-              delete (task as Record<string, unknown>).type
+              delete task.type
               await cursor.update(task)
             }
             await cursor.continue().then(process)

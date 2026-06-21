@@ -7,11 +7,26 @@ export type TaskType = 'idea' | 'issue' | 'exploration'
 export type TaskStatus = 'todo' | 'in_progress' | 'done'
 export type Priority = 'low' | 'medium' | 'high'
 
+/**
+ * 类型本身也是标签。这三个值作为特殊标签存放在 Task.tags 中，
+ * 通过 getTaskType() 从 tags 派生类型。
+ */
+export const TYPE_TAGS: readonly TaskType[] = ['idea', 'issue', 'exploration']
+
+/**
+ * 从标签中派生任务类型。返回第一个匹配的类型标签，无则 null。
+ */
+export function getTaskType(tags: string[]): TaskType | null {
+  for (const t of TYPE_TAGS) {
+    if (tags.includes(t)) return t
+  }
+  return null
+}
+
 export interface Task {
   id: string
   title: string
   description: string
-  type: TaskType
   status: TaskStatus
   priority: Priority
   tags: string[]
@@ -30,7 +45,6 @@ export interface Task {
 export interface TaskInput {
   title: string
   description?: string
-  type: TaskType
   priority?: Priority
   tags?: string[]
 }

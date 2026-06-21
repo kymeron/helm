@@ -1,5 +1,6 @@
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
+import { getTaskType } from '@/types/task'
 import type { Task, TaskType, TaskStatus, Priority } from '@/types/task'
 
 interface TaskDetailModalProps {
@@ -52,6 +53,8 @@ function formatDate(iso: string): string {
 function TaskDetailModal({ open, task, onClose, onEdit }: TaskDetailModalProps) {
   if (!task) return null
 
+  const taskType = getTaskType(task.tags)
+
   return (
     <Modal
       open={open}
@@ -96,15 +99,19 @@ function TaskDetailModal({ open, task, onClose, onEdit }: TaskDetailModalProps) 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="helm-label mb-1.5">类型</div>
-            <span
-              className="type-badge"
-              style={{
-                backgroundColor: `${typeColors[task.type]}1a`,
-                color: typeColors[task.type],
-              }}
-            >
-              {typeLabels[task.type]}
-            </span>
+            {taskType ? (
+              <span
+                className="type-badge"
+                style={{
+                  backgroundColor: `${typeColors[taskType]}1a`,
+                  color: typeColors[taskType],
+                }}
+              >
+                {typeLabels[taskType]}
+              </span>
+            ) : (
+              <span className="font-mono text-xs text-ink-muted">未分类</span>
+            )}
           </div>
           <div>
             <div className="helm-label mb-1.5">优先级</div>

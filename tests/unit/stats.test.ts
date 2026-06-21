@@ -9,10 +9,9 @@ function createMockTask(
     id: `test-${Math.random().toString(36).slice(2)}`,
     title: 'Test Task',
     description: '',
-    type: 'idea',
     status: 'todo',
     priority: 'medium',
-    tags: [],
+    tags: ['idea'],
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     completedAt: null,
@@ -146,10 +145,10 @@ describe('stats', () => {
   describe('computeTypeDistribution', () => {
     it('returns distribution with all three types', () => {
       const tasks: Task[] = [
-        createMockTask({ type: 'idea' }),
-        createMockTask({ type: 'idea' }),
-        createMockTask({ type: 'issue' }),
-        createMockTask({ type: 'exploration' }),
+        createMockTask({ tags: ['idea'] }),
+        createMockTask({ tags: ['idea'] }),
+        createMockTask({ tags: ['issue'] }),
+        createMockTask({ tags: ['exploration'] }),
       ]
       
       const result = computeTypeDistribution(tasks)
@@ -167,7 +166,7 @@ describe('stats', () => {
 
     it('returns zero counts for types with no tasks', () => {
       const tasks: Task[] = [
-        createMockTask({ type: 'idea' }),
+        createMockTask({ tags: ['idea'] }),
       ]
       
       const result = computeTypeDistribution(tasks)
@@ -187,6 +186,16 @@ describe('stats', () => {
       const result = computeTypeDistribution([])
       
       expect(result).toHaveLength(3)
+      expect(result.every(d => d.count === 0)).toBe(true)
+    })
+
+    it('counts tasks without a type tag as none (not attributed to any type)', () => {
+      const tasks: Task[] = [
+        createMockTask({ tags: ['work'] }), // no type tag
+      ]
+
+      const result = computeTypeDistribution(tasks)
+
       expect(result.every(d => d.count === 0)).toBe(true)
     })
   })

@@ -4,7 +4,7 @@
  */
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
-import type { Task, TaskInput, TaskStatus, TaskType, Priority } from '@/types/task'
+import type { Task, TaskInput, TaskStatus, Priority } from '@/types/task'
 
 /**
  * Generate a RFC 4122 v4 UUID.
@@ -51,7 +51,6 @@ interface HelmDB extends DBSchema {
     value: Task
     indexes: {
       'by-status': TaskStatus
-      'by-type': TaskType
       'by-created': string
       'by-completed': string
     }
@@ -59,19 +58,41 @@ interface HelmDB extends DBSchema {
 }
 
 const DB_NAME = 'helm-db'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let dbPromise: Promise<IDBPDatabase<HelmDB>> | null = null
 
 function getDB(): Promise<IDBPDatabase<HelmDB>> {
   if (!dbPromise) {
     dbPromise = openDB<HelmDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        const store = db.createObjectStore('tasks', { keyPath: 'id' })
-        store.createIndex('by-status', 'status')
-        store.createIndex('by-type', 'type')
-        store.createIndex('by-created', 'createdAt')
-        store.createIndex('by-completed', 'completedAt')
+      upgrade(db, oldVersion, _newVersion, transaction) {
+        // v1: initial schema
+        if (oldVersion < 1) {
+          const store = db.createObjectStore('tasks', { keyPath: 'id' })
+          store.createIndex('by-status', 'status')
+          store.createIndex('by-created', 'createdAt')
+          store.createIndex('by-completed', 'completedAt')
+        }
+        // v2: 合并 type 与 tags — 将旧记录的 type 字段并入 tags，删除 type
+        // 字段与 by-type 索引。类型本身也是标签（见 TYPE_TAGS）。
+        if (oldVersion < 2) {
+          const store = transaction.objectStore('tasks')
+          if (store.indexNames.contains('by-type')) {
+            store.deleteIndex('by-type')
+          }
+          store.openCursor().then(async function process(cursor) {
+            if (!cursor) return
+            const task = cursor.value as Task & { type?: string }
+            if (task.type !== undefined) {
+              if (!task.tags.includes(task.type)) {
+                task.tags = [...task.tags, task.type]
+              }
+              delete (task as Record<string, unknown>).type
+              await cursor.update(task)
+            }
+            await cursor.continue().then(process)
+          })
+        }
       },
     })
   }
@@ -95,7 +116,6 @@ export async function createTask(input: TaskInput): Promise<Task> {
     id: uuid(),
     title: input.title.trim(),
     description: input.description?.trim() ?? '',
-    type: input.type,
     status: 'todo',
     priority: input.priority ?? 'medium',
     tags: input.tags?.map(t => t.trim()).filter(t => t.length > 0) ?? [],
@@ -112,12 +132,11 @@ export async function updateTask(id: string, updates: Partial<TaskInput>): Promi
   const db = await getDB()
   const existing = await db.get('tasks', id)
   if (!existing) return null
-  
+
   const updated: Task = {
     ...existing,
     title: updates.title?.trim() ?? existing.title,
     description: updates.description?.trim() ?? existing.description,
-    type: updates.type ?? existing.type,
     priority: updates.priority ?? existing.priority,
     tags: updates.tags?.map(t => t.trim()).filter(t => t.length > 0) ?? existing.tags,
     updatedAt: new Date().toISOString(),
@@ -208,7 +227,6 @@ interface SeedTask {
   id: string           // Fixed UUID — makes seeding idempotent (put = upsert)
   title: string
   description: string
-  type: TaskType
   status: TaskStatus
   priority: Priority
   tags: string[]
@@ -218,15 +236,15 @@ interface SeedTask {
 
 const seedTasks: SeedTask[] = [
   // --- Todo ---
-  { id: 'seed-0001-0000-0000-000000000001', title: '添加 JSON 导入功能', description: '从 JSON 文件恢复任务,作为本地持久化的最后兜底。', type: 'idea', status: 'todo', priority: 'high', tags: ['feature'], createdDaysAgo: 2 },
-  { id: 'seed-0001-0000-0000-000000000002', title: '修复移动端新建按钮溢出', description: '当软键盘弹出时提交按钮会被遮挡。', type: 'issue', status: 'todo', priority: 'medium', tags: ['bug', 'mobile'], createdDaysAgo: 1 },
+  { id: 'seed-0001-0000-0000-000000000001', title: '添加 JSON 导入功能', description: '从 JSON 文件恢复任务,作为本地持久化的最后兜底。', status: 'todo', priority: 'high', tags: ['idea', 'feature'], createdDaysAgo: 2 },
+  { id: 'seed-0001-0000-0000-000000000002', title: '修复移动端新建按钮溢出', description: '当软键盘弹出时提交按钮会被遮挡。', status: 'todo', priority: 'medium', tags: ['issue', 'bug', 'mobile'], createdDaysAgo: 1 },
 
   // --- In Progress ---
-  { id: 'seed-0001-0000-0000-000000000003', title: '重构活动热力图配色', description: '使色阶与项目主题一致,GitHub 风格 + teal 主色。', type: 'exploration', status: 'in_progress', priority: 'medium', tags: ['ui'], createdDaysAgo: 5 },
+  { id: 'seed-0001-0000-0000-000000000003', title: '重构活动热力图配色', description: '使色阶与项目主题一致,GitHub 风格 + teal 主色。', status: 'in_progress', priority: 'medium', tags: ['exploration', 'ui'], createdDaysAgo: 5 },
 
   // --- Done ---
-  { id: 'seed-0001-0000-0000-000000000004', title: '搭建局域网同步层', description: '基于 Vite 插件的 WebSocket hub,tombstone 实现删除同步。', type: 'idea', status: 'done', priority: 'high', tags: ['sync'], createdDaysAgo: 12, completedDaysAgo: 2 },
-  { id: 'seed-0001-0000-0000-000000000005', title: '适配移动端布局', description: 'TopBar / Modal / Kanban 全部响应式化。', type: 'idea', status: 'done', priority: 'medium', tags: ['mobile', 'responsive'], createdDaysAgo: 8, completedDaysAgo: 1 },
+  { id: 'seed-0001-0000-0000-000000000004', title: '搭建局域网同步层', description: '基于 Vite 插件的 WebSocket hub,tombstone 实现删除同步。', status: 'done', priority: 'high', tags: ['idea', 'sync'], createdDaysAgo: 12, completedDaysAgo: 2 },
+  { id: 'seed-0001-0000-0000-000000000005', title: '适配移动端布局', description: 'TopBar / Modal / Kanban 全部响应式化。', status: 'done', priority: 'medium', tags: ['idea', 'mobile', 'responsive'], createdDaysAgo: 8, completedDaysAgo: 1 },
 ]
 
 export async function seedIfEmpty(): Promise<void> {
@@ -243,7 +261,6 @@ export async function seedIfEmpty(): Promise<void> {
       id: seed.id,
       title: seed.title,
       description: seed.description,
-      type: seed.type,
       status: seed.status,
       priority: seed.priority,
       tags: seed.tags,

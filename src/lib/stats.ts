@@ -4,6 +4,7 @@
  */
 
 import type { Task, TaskType } from '@/types/task'
+import { getTaskType } from '@/types/task'
 import { getRange, isWithinRange } from '@/lib/time'
 
 export interface Metrics {
@@ -88,13 +89,14 @@ export function computeMetrics(tasks: Task[], now: Date = new Date()): Metrics {
 /**
  * Compute type distribution for donut chart.
  * Always returns all three types (with 0 count if no tasks).
+ * 类型本身也是标签，通过 getTaskType() 从 tags 派生类型。
  */
 export function computeTypeDistribution(tasks: Task[]): TypeDistribution[] {
   const types: TaskType[] = ['idea', 'issue', 'exploration']
-  
+
   return types.map((type) => ({
     type,
-    count: tasks.filter((t) => t.type === type).length,
+    count: tasks.filter((t) => getTaskType(t.tags) === type).length,
   }))
 }
 

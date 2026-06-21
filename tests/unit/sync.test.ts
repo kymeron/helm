@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mergeTasks, buildSyncUrl, SYNC_PATH } from '@/lib/sync'
-import type { Task, TaskStatus, TaskType, Priority } from '@/types/task'
+import type { Task, TaskStatus, Priority } from '@/types/task'
 
 interface TaskOverrides extends Partial<Omit<Task, 'id' | 'updatedAt'>> {
   id: string
@@ -9,16 +9,14 @@ interface TaskOverrides extends Partial<Omit<Task, 'id' | 'updatedAt'>> {
 
 function task(overrides: TaskOverrides): Task {
   const status: TaskStatus = overrides.status ?? 'todo'
-  const type: TaskType = overrides.type ?? 'idea'
   const priority: Priority = overrides.priority ?? 'medium'
   return {
     id: overrides.id,
     title: overrides.title ?? `task-${overrides.id}`,
     description: overrides.description ?? '',
-    type,
     status,
     priority,
-    tags: overrides.tags ?? [],
+    tags: overrides.tags ?? ['idea'],
     createdAt: overrides.createdAt ?? overrides.updatedAt,
     updatedAt: overrides.updatedAt,
     completedAt: overrides.completedAt ?? null,

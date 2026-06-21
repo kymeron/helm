@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useMemo } from 'react'
 import { Badge, getPriorityBadgeVariant } from '@/components/ui/Badge'
+import { getTaskType } from '@/types/task'
 import type { Task, Priority } from '@/types/task'
 
 interface TaskCardProps {
@@ -52,6 +53,8 @@ function TaskCard({ task, onEdit, onDelete, onView }: TaskCardProps) {
     return date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
   }, [task.updatedAt])
 
+  const taskType = getTaskType(task.tags)
+
   return (
     <div
       ref={setNodeRef}
@@ -67,11 +70,13 @@ function TaskCard({ task, onEdit, onDelete, onView }: TaskCardProps) {
       {...attributes}
       {...listeners}
     >
-      {/* Left accent bar — type color */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-lg"
-        style={{ backgroundColor: typeColors[task.type] }}
-      />
+      {/* Left accent bar — type color (类型本身也是标签，从 tags 派生) */}
+      {taskType && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-lg"
+          style={{ backgroundColor: typeColors[taskType] }}
+        />
+      )}
 
       <div className="p-3 pl-4">
         {/* Header: Title + ID + Priority */}

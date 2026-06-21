@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type FormEvent, type KeyboardEvent } from 
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useTasksStore, useUIStore } from '@/store'
+import { getTaskType, TYPE_TAGS } from '@/types/task'
 import type { Task, TaskInput, TaskType, Priority } from '@/types/task'
 
 interface TaskModalProps {
@@ -31,7 +32,7 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<TaskType>('idea')
+  const [typeTag, setTypeTag] = useState<TaskType | null>('idea')
   const [priority, setPriority] = useState<Priority>('medium')
   const [tags, setTags] = useState('')
   const [loading, setLoading] = useState(false)
@@ -44,13 +45,14 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
     if (task) {
       setTitle(task.title)
       setDescription(task.description)
-      setType(task.type)
+      setTypeTag(getTaskType(task.tags))
       setPriority(task.priority)
-      setTags(task.tags.join(', '))
+      // 标签输入只显示非类型标签（类型标签由类型按钮管理）
+      setTags(task.tags.filter((t) => !TYPE_TAGS.includes(t as TaskType)).join(', '))
     } else {
       setTitle('')
       setDescription('')
-      setType('idea')
+      setTypeTag('idea')
       setPriority('medium')
       setTags('')
     }
@@ -91,9 +93,12 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
     const input: TaskInput = {
       title: title.trim(),
       description: description.trim(),
-      type,
       priority,
-      tags: tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0),
+      // 类型本身也是标签：类型标签 + 普通标签合并存入 tags
+      tags: [
+        ...(typeTag ? [typeTag] : []),
+        ...tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0),
+      ],
     }
 
     try {
@@ -175,7 +180,7 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
           />
         </div>
 
-        {/* Type */}
+        {/* Type — 类型本身也是标签，按钮切换类型标签 */}
         <div>
           <label className="helm-label block mb-2">
             类型
@@ -185,9 +190,9 @@ function TaskModal({ open, task, onClose }: TaskModalProps) {
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => setType(opt.value)}
+                onClick={() => setTypeTag(typeTag === opt.value ? null : opt.value)}
                 className={`flex-1 px-3 py-2 font-mono text-[10px] uppercase tracking-wider border rounded-lg transition-all duration-200 ease-snappy ${
-                  type === opt.value
+                  typeTag === opt.value
                     ? 'bg-accent/8 border-accent text-accent'
                     : 'bg-surface border-border text-ink-muted hover:border-border-strong'
                 }`}

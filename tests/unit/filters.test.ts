@@ -3,20 +3,21 @@ import { applyFilters, sortTasks } from '@/lib/filters'
 import type { Task, Filters } from '@/types/task'
 
 function createMockTask(
-  type: 'idea' | 'issue' | 'exploration' = 'idea',
+  type: 'idea' | 'issue' | 'exploration' | 'none' = 'idea',
   priority: 'low' | 'medium' | 'high' = 'medium',
   tags: string[] = [],
   createdAt: string = '2026-01-01T00:00:00Z',
   updatedAt: string = '2026-01-01T00:00:00Z'
 ): Task {
+  // 类型本身也是标签：将类型并入 tags
+  const allTags = type === 'none' ? tags : [type, ...tags]
   return {
     id: `test-${Math.random().toString(36).slice(2)}`,
     title: 'Test Task',
     description: '',
-    type,
     status: 'todo',
     priority,
-    tags,
+    tags: allTags,
     createdAt,
     updatedAt,
     completedAt: null,
@@ -38,11 +39,11 @@ describe('filters', () => {
       expect(result).toHaveLength(3)
     })
 
-    it('filters by type', () => {
+    it('filters by type (type is a tag)', () => {
       const filters: Filters = { type: 'idea', priority: 'all', tag: null }
       const result = applyFilters(tasks, filters)
       expect(result).toHaveLength(1)
-      expect(result[0]!.type).toBe('idea')
+      expect(result[0]!.tags.includes('idea')).toBe(true)
     })
 
     it('filters by priority', () => {
@@ -63,7 +64,7 @@ describe('filters', () => {
       const filters: Filters = { type: 'exploration', priority: 'low', tag: 'work' }
       const result = applyFilters(tasks, filters)
       expect(result).toHaveLength(1)
-      expect(result[0]!.type).toBe('exploration')
+      expect(result[0]!.tags.includes('exploration')).toBe(true)
       expect(result[0]!.priority).toBe('low')
       expect(result[0]!.tags.includes('work')).toBe(true)
     })

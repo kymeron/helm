@@ -11,8 +11,8 @@ import { PRIORITY_ORDER as priorityMap } from '@/types/task'
  */
 export function applyFilters(tasks: Task[], filters: Filters): Task[] {
   return tasks.filter((task) => {
-    // Type filter
-    if (filters.type !== 'all' && task.type !== filters.type) {
+    // Type filter — 类型本身也是标签，检查 tags 是否包含该类型标签
+    if (filters.type !== 'all' && !task.tags.includes(filters.type)) {
       return false
     }
 

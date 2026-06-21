@@ -71,6 +71,7 @@ const config: Config = {
         'fade-in': 'fade-in 0.3s ease-out backwards',
         'slide-up': 'slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1) backwards',
         'matrix-pulse': 'matrix-pulse 2s ease-in-out infinite',
+        'success-pulse': 'success-pulse 2s ease-in-out infinite',
         'logo-spin': 'logo-spin 6s linear infinite',
       },
       keyframes: {
@@ -85,6 +86,10 @@ const config: Config = {
         'matrix-pulse': {
           '0%, 100%': { opacity: '1', boxShadow: '0 0 6px rgba(0, 255, 65, 0.6)' },
           '50%': { opacity: '0.35', boxShadow: '0 0 12px rgba(0, 255, 65, 0.25)' },
+        },
+        'success-pulse': {
+          '0%, 100%': { opacity: '1', boxShadow: '0 0 6px rgba(94, 234, 212, 0.6)' },
+          '50%': { opacity: '0.35', boxShadow: '0 0 12px rgba(94, 234, 212, 0.25)' },
         },
         'logo-spin': {
           '0%': { transform: 'rotate(45deg)' },

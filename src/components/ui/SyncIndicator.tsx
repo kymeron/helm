@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { useSyncStatus } from '@/hooks/useSync'
 
 /**
@@ -15,8 +16,9 @@ function SyncIndicator() {
   const pushesSent = useSyncStatus((s) => s.pushesSent)
   const snapshotsReceived = useSyncStatus((s) => s.snapshotsReceived)
 
-  // Map status → (dot color, label).
+  // Map status → (dot className, dot style, label, title).
   let dot = 'bg-ink-muted'
+  let dotStyle: CSSProperties | undefined
   let label = '未连接'
   let title = '尚未建立同步连接'
 
@@ -25,7 +27,8 @@ function SyncIndicator() {
     label = '连接中'
     title = '正在连接同步服务器…'
   } else if (status === 'connected') {
-    dot = 'bg-success'
+    dot = 'animate-success-pulse'
+    dotStyle = { backgroundColor: '#5eead4', boxShadow: '0 0 6px rgba(94, 234, 212, 0.6)' }
     label = '已同步'
     title = `已连接同步服务器\n推送 ${pushesSent} 次 · 接收 ${snapshotsReceived} 次`
   } else if (status === 'reconnecting') {
@@ -44,7 +47,7 @@ function SyncIndicator() {
       title={title}
       aria-label={`同步状态: ${label}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} aria-hidden="true" />
+      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} style={dotStyle} aria-hidden="true" />
       <span>{label}</span>
     </div>
   )

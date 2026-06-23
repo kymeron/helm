@@ -1,0 +1,11 @@
+node_modules
+dist
+.specify
+.trae
+specs
+PRD.md
+README.md
+tests
+.vscode
+.idea
+*.log

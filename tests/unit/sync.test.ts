@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mergeTasks, buildSyncUrl, SYNC_PATH } from '@/lib/sync'
+import { mergeTasks, mergeCloudSnapshot, buildSyncUrl, SYNC_PATH } from '@/lib/sync'
 import type { Task, TaskStatus, Priority } from '@/types/task'
 
 interface TaskOverrides extends Partial<Omit<Task, 'id' | 'updatedAt'>> {
@@ -161,6 +161,24 @@ describe('mergeTasks — Last-Write-Wins by updatedAt with tombstone support', (
     expect(result.length).toBe(1)
     expect(result[0]?.title).toBe('A re-edited')
     expect(result[0]?.deletedAt).toBeNull()
+  })
+})
+
+describe('mergeCloudSnapshot', () => {
+  it('delegates to mergeTasks using snapshot.tasks', () => {
+    const local = [task({ id: 'a', updatedAt: '2026-06-19T10:00:00Z', title: 'local' })]
+    const snapshot = {
+      tasks: [task({ id: 'a', updatedAt: '2026-06-19T11:00:00Z', title: 'remote' })],
+      updatedAt: '2026-06-19T11:00:00Z',
+    }
+    const result = mergeCloudSnapshot(local, snapshot)
+    expect(result[0]?.title).toBe('remote')
+  })
+
+  it('keeps local-only tasks when remote snapshot is empty', () => {
+    const local = [task({ id: 'a', updatedAt: '2026-06-19T10:00:00Z' })]
+    const result = mergeCloudSnapshot(local, { tasks: [] })
+    expect(result.map((t) => t.id)).toEqual(['a'])
   })
 })
 

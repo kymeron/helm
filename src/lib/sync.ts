@@ -40,6 +40,18 @@ export function mergeTasks(local: Task[], remote: Task[]): Task[] {
   return Array.from(byId.values())
 }
 
+/**
+ * Merge a server snapshot into the local task list.
+ *
+ * This is a convenience wrapper around `mergeTasks` that extracts the task
+ * array from a `CloudSnapshot`. The LWW reconciliation (by `updatedAt`) is
+ * the same as LAN sync, so deletions with newer `updatedAt` propagate
+ * correctly via `deletedAt` tombstones.
+ */
+export function mergeCloudSnapshot(local: Task[], snapshot: { tasks: Task[] }): Task[] {
+  return mergeTasks(local, snapshot.tasks)
+}
+
 /** Sync WebSocket endpoint path — must match `vite-plugin-sync.ts`. */
 export const SYNC_PATH = '/__helm-sync'
 

@@ -1,12 +1,14 @@
+import { useState, useCallback } from 'react'
 import type { CSSProperties } from 'react'
 import { useSyncStatus } from '@/hooks/useSync'
 import { useCloudSyncStatus } from '@/hooks/useCloudSync'
+import { buildShareUrl, readTokenFromStorage } from '@/lib/token'
 
 /**
  * Compact status pill for the TopBar.
  *
  * Shows the best available sync state:
- *   - Vercel KV cloud sync when configured (production / Vercel deployments).
+ *   - Upstash Redis cloud sync when configured (Vercel deployments).
  *   - LAN WebSocket sync as a fallback (development / local WiFi).
  *
  * 🟢 已同步  ·  3 台设备
@@ -29,6 +31,39 @@ function SyncIndicator() {
   const cloudPushes = useCloudSyncStatus((s) => s.pushesSent)
   const cloudPulls = useCloudSyncStatus((s) => s.pullsReceived)
   const cloudLastSync = useCloudSyncStatus((s) => s.lastSyncedAt)
+
+  // Share link state
+  const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState<string | null>(null)
+
+  const handleShare = useCallback(async () => {
+    setCopyError(null)
+    const token = readTokenFromStorage()
+    if (!token) {
+      setCopyError('尚未建立同步标识')
+      return
+    }
+    const url = buildShareUrl(token)
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url)
+      } else {
+        // Fallback for non-secure contexts (e.g. plain http on LAN).
+        const ta = document.createElement('textarea')
+        ta.value = url
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch (e) {
+      setCopyError((e as Error).message || '复制失败')
+    }
+  }, [])
 
   // Priorities: cloud synced > cloud syncing > cloud error/offline > LAN connected > LAN connecting > LAN error > idle
   let dot = 'bg-ink-muted'
@@ -69,15 +104,26 @@ function SyncIndicator() {
   }
 
   return (
-    <div
-      className="flex items-center gap-2 font-mono text-[10px] text-ink-muted uppercase tracking-widest"
-      title={title}
-      aria-label={`同步状态: ${label}`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} style={dotStyle} aria-hidden="true" />
-      <span>{label}</span>
+    <div className="flex items-center gap-1.5 sm:gap-2">
+      <div
+        className="flex items-center gap-2 font-mono text-[10px] text-ink-muted uppercase tracking-widest"
+        title={title}
+        aria-label={`同步状态: ${label}`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${dot}`} style={dotStyle} aria-hidden="true" />
+        <span>{label}</span>
+      </div>
+      <button
+        onClick={handleShare}
+        className="font-mono text-[10px] uppercase tracking-widest text-ink-muted hover:text-accent border border-border hover:border-accent/40 px-1.5 py-0.5 rounded transition-colors duration-200"
+        title={copyError ?? '复制分享链接,粘贴到其他设备以同步数据'}
+        aria-label="复制分享链接"
+      >
+        {copied ? '已复制' : '分享'}
+      </button>
     </div>
   )
 }
 
 export { SyncIndicator }
+

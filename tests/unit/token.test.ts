@@ -4,7 +4,7 @@ import {
   readTokenFromUrl,
   readTokenFromStorage,
   persistToken,
-  reflectTokenInUrl,
+  buildShareUrl,
   resolveToken,
 } from '@/lib/token'
 
@@ -46,24 +46,38 @@ describe('token', () => {
     expect(window.localStorage.getItem('helm:cloud-sync-token')).toBe('my-token')
   })
 
-  it('reflects token in URL without reloading', () => {
-    reflectTokenInUrl('reflect-token')
-    expect(window.location.search).toContain('token=reflect-token')
+  it('buildShareUrl includes the token as ?token=xxx', () => {
+    window.history.replaceState({}, '', '/dashboard')
+    const url = buildShareUrl('my-token')
+    expect(url).toContain('/dashboard?token=my-token')
   })
 
-  it('resolveToken prefers URL over localStorage', () => {
-    window.localStorage.setItem('helm:cloud-sync-token', 'stored-token')
+  it('resolveToken adopts URL token (share link) and persists to localStorage', () => {
     window.history.replaceState({}, '', '/?token=url-token')
     const token = resolveToken()
     expect(token).toBe('url-token')
     expect(window.localStorage.getItem('helm:cloud-sync-token')).toBe('url-token')
   })
 
-  it('resolveToken falls back to localStorage then generates new', () => {
+  it('resolveToken prefers localStorage over generating new', () => {
+    window.localStorage.setItem('helm:cloud-sync-token', 'stored-token')
+    const token = resolveToken()
+    expect(token).toBe('stored-token')
+  })
+
+  it('resolveToken generates and persists a new token when none exists, without touching URL', () => {
     const token = resolveToken()
     expect(token.length).toBeGreaterThan(20)
-    expect(window.location.search).toContain(`token=${encodeURIComponent(token)}`)
     expect(window.localStorage.getItem('helm:cloud-sync-token')).toBe(token)
+    // URL MUST remain clean so opening the root URL in another browser
+    // does not receive this token and split the dataset.
+    expect(window.location.search).toBe('')
+  })
+
+  it('does not write the token back to the URL when resolving', () => {
+    window.localStorage.setItem('helm:cloud-sync-token', 'existing')
+    resolveToken()
+    expect(window.location.search).toBe('')
   })
 
   it('gracefully handles localStorage being disabled', () => {

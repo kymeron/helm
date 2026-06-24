@@ -2,9 +2,16 @@
  * User token lifecycle for cloud sync.
  *
  * HELM uses an anonymous, URL-safe token as the data partition key.
- * The token is read from the URL first (so users can share/bookmark),
- * then falls back to localStorage, and finally generates a new one if
- * neither source has it. The active token is always reflected in the URL.
+ *
+ * The token MUST come from localStorage so that the same browser always
+ * uses the same dataset. The URL is only consulted when the user opens
+ * a "share link" that already contains `?token=xxx` — in that case we
+ * adopt the shared token and persist it to localStorage.
+ *
+ * Crucially, we do NOT write the token back to the URL automatically.
+ * Doing so would cause every new tab/device that opens the root URL to
+ * receive its own freshly-generated token, splitting the dataset across
+ * browsers. Users share the link explicitly via the "复制分享链接" button.
  */
 
 const TOKEN_KEY = 'helm:cloud-sync-token'
@@ -30,7 +37,10 @@ export function generateToken(): string {
 }
 
 /**
- * Read the token from the current URL query string.
+ * Read the token from the current URL query string (if present).
+ *
+ * This is only meaningful when the user follows a share link; we never
+ * put the token there ourselves.
  */
 export function readTokenFromUrl(): string | null {
   if (typeof window === 'undefined') return null
@@ -65,22 +75,27 @@ export function persistToken(token: string): void {
 }
 
 /**
- * Reflect the active token in the URL without reloading the page.
+ * Build a shareable URL that includes the active token as `?token=xxx`.
+ *
+ * This is the ONLY way the token should end up in the URL. It must be
+ * triggered explicitly by the user (via the "复制分享链接" button).
  */
-export function reflectTokenInUrl(token: string): void {
-  if (typeof window === 'undefined') return
-  const url = new URL(window.location.href)
-  const current = url.searchParams.get(TOKEN_PARAM)
-  if (current === token) return
+export function buildShareUrl(token: string): string {
+  if (typeof window === 'undefined') return ''
+  const url = new URL(window.location.origin + window.location.pathname)
   url.searchParams.set(TOKEN_PARAM, token)
-  window.history.replaceState({}, '', url.toString())
+  return url.toString()
 }
 
 /**
- * Resolve the active token using the precedence:
- *   URL query > localStorage > generate new
+ * Resolve the active token:
+ *   - If the URL has `?token=xxx` (user opened a share link), adopt it
+ *     and persist to localStorage.
+ *   - Otherwise, prefer localStorage so this browser keeps its dataset.
+ *   - If neither, generate a new one and persist it (but never write
+ *     to the URL).
  *
- * Side effects: persists and reflects the resolved token.
+ * Returns the active token. Side effect: persists to localStorage.
  */
 export function resolveToken(): string {
   const fromUrl = readTokenFromUrl()
@@ -90,13 +105,9 @@ export function resolveToken(): string {
   }
 
   const fromStorage = readTokenFromStorage()
-  if (fromStorage) {
-    reflectTokenInUrl(fromStorage)
-    return fromStorage
-  }
+  if (fromStorage) return fromStorage
 
   const generated = generateToken()
   persistToken(generated)
-  reflectTokenInUrl(generated)
   return generated
 }

@@ -36,14 +36,19 @@ function TopBar() {
   }, [])
 
   const datePart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const timePart = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+  const timeHHMMSS = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
 
   return (
     <header className="border-b border-border bg-surface/70 backdrop-blur-md sticky top-0 z-10">
       <div className="px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Wordmark */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 z-10">
-          <div className="relative flex items-center justify-center">
+        {/* Wordmark + live clock — the clock sits flush against the
+            "HELM" wordmark as part of the same instrument cluster. The
+            vertical hairline divider was removed to tighten the read;
+            the `·` between date and time is the only separator. Uses
+            `items-baseline` so the mono numerals share their baseline
+            with the display-serif H / E / L / M strokes. */}
+        <div className="flex items-baseline gap-2 sm:gap-2.5 shrink-0 z-10">
+          <div className="relative flex items-center justify-center self-center">
             <div
               className="w-6 h-6 sm:w-7 sm:h-7 [&_svg]:!w-full [&_svg]:!h-full"
               dangerouslySetInnerHTML={{
@@ -56,6 +61,15 @@ function TopBar() {
           <h1 className="font-display text-xl sm:text-2xl font-normal tracking-tight text-ink leading-none">
             HELM
           </h1>
+          <div
+            className="hidden sm:flex items-baseline gap-1.5 ml-1 font-mono text-[11px] leading-none text-accent/80 tabular-nums translate-y-[0.5px]"
+            style={{ textShadow: '0 0 4px rgba(94, 234, 212, 0.3)' }}
+            aria-hidden="true"
+          >
+            <span>{datePart}</span>
+            <span className="text-accent/40">·</span>
+            <span>{timeHHMMSS}</span>
+          </div>
         </div>
 
         {/* Search Bar — flex item on mobile (flex-1), absolute centered on md+ */}
@@ -80,25 +94,9 @@ function TopBar() {
         {/* Status + Actions — right aligned */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {/* Sync indicator — visible at sm+ so mobile devices can confirm
-              they are talking to the LAN sync server. */}
+              they are talking to the cloud sync server. */}
           <div className="hidden sm:flex items-center pl-3 border-l border-border">
             <SyncIndicator />
-          </div>
-
-          <div className="hidden lg:flex items-center gap-4 font-mono text-[10px] text-ink-muted uppercase tracking-widest">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full animate-matrix-pulse" style={{ backgroundColor: '#00ff41', boxShadow: '0 0 6px rgba(0, 255, 65, 0.6)' }} />
-              <span>在线</span>
-            </div>
-            <div className="tabular-nums flex items-center gap-1.5">
-              <span className="font-mono text-sm text-accent" style={{ textShadow: '0 0 8px rgba(94, 234, 212, 0.6)' }}>
-                {datePart}
-              </span>
-              <span className="text-accent/30">·</span>
-              <span className="font-mono text-sm text-accent" style={{ textShadow: '0 0 8px rgba(94, 234, 212, 0.6)' }}>
-                {timePart}
-              </span>
-            </div>
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2">

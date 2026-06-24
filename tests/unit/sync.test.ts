@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mergeTasks, mergeCloudSnapshot, buildSyncUrl, SYNC_PATH } from '@/lib/sync'
+import { mergeTasks, mergeCloudSnapshot } from '@/lib/sync'
 import type { Task, TaskStatus, Priority } from '@/types/task'
 
 interface TaskOverrides extends Partial<Omit<Task, 'id' | 'updatedAt'>> {
@@ -179,23 +179,5 @@ describe('mergeCloudSnapshot', () => {
     const local = [task({ id: 'a', updatedAt: '2026-06-19T10:00:00Z' })]
     const result = mergeCloudSnapshot(local, { tasks: [] })
     expect(result.map((t) => t.id)).toEqual(['a'])
-  })
-})
-
-describe('sync URL helpers', () => {
-  it('uses ws:// for http pages', () => {
-    Object.defineProperty(window, 'location', {
-      value: { protocol: 'http:', host: '192.168.1.42:5173' },
-      writable: true,
-    })
-    expect(buildSyncUrl()).toBe('ws://192.168.1.42:5173' + SYNC_PATH)
-  })
-
-  it('uses wss:// for https pages', () => {
-    Object.defineProperty(window, 'location', {
-      value: { protocol: 'https:', host: 'helm.example.com' },
-      writable: true,
-    })
-    expect(buildSyncUrl()).toBe('wss://helm.example.com' + SYNC_PATH)
   })
 })

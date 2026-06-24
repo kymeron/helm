@@ -196,6 +196,8 @@ interface HelmExport {
 ## ☁️ Upstash 云端同步
 
 > 本功能为**可选增量**,用于 Vercel 生产部署场景,让 PC 与手机在不同网络下也能保持数据一致。
+>
+> 📘 完整的部署、故障排查与日常维护步骤见 **[docs/deployment.md](docs/deployment.md)**。
 
 ### 工作原理
 

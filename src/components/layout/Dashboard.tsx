@@ -10,7 +10,6 @@ import { TaskModal } from '@/components/kanban/TaskModal'
 import { TaskDetailModal } from '@/components/kanban/TaskDetailModal'
 import { useTasksStore, useUIStore } from '@/store'
 import { useStats } from '@/hooks/useStats'
-import { useSync } from '@/hooks/useSync'
 import { useCloudSync } from '@/hooks/useCloudSync'
 import type { Task, TimeRange } from '@/types/task'
 
@@ -46,11 +45,7 @@ function Dashboard() {
     }
   }, [initialized, init])
 
-  // Mount the LAN sync layer once the store is up.
-  // The hook opens its own WebSocket and pushes local mutations out.
-  useSync({ enabled: initialized })
-
-  // Mount the Vercel KV cloud sync layer.
+  // Mount the cloud sync layer once the store is up.
   useCloudSync({ enabled: initialized })
 
   const handleEditTask = (task: Task) => {

@@ -1,30 +1,18 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import type { CSSProperties } from 'react'
-import { useSyncStatus } from '@/hooks/useSync'
 import { useCloudSyncStatus } from '@/hooks/useCloudSync'
-import { buildShareUrl, readTokenFromStorage } from '@/lib/token'
+import { ShareDialog } from '@/components/ui/ShareDialog'
 
 /**
  * Compact status pill for the TopBar.
  *
- * Shows the best available sync state:
- *   - Upstash Redis cloud sync when configured (Vercel deployments).
- *   - LAN WebSocket sync as a fallback (development / local WiFi).
- *
- * 🟢 已同步  ·  3 台设备
- * 🟡 连接中…
- * 🔴 离线 / 出错
+ * Shows the Upstash Redis cloud sync state (the only sync layer).
+ * The `分享` chip opens a focused dialog with the full share URL and
+ * key management actions. See [ShareDialog] for the interaction.
  *
  * Hover reveals push / receive counters for debugging.
  */
 function SyncIndicator() {
-  // LAN sync state
-  const lanStatus = useSyncStatus((s) => s.status)
-  const lanError = useSyncStatus((s) => s.error)
-  const lanPushes = useSyncStatus((s) => s.pushesSent)
-  const lanReceived = useSyncStatus((s) => s.snapshotsReceived)
-  const peerCount = useSyncStatus((s) => s.peerCount)
-
   // Cloud sync state
   const cloudStatus = useCloudSyncStatus((s) => s.status)
   const cloudError = useCloudSyncStatus((s) => s.error)
@@ -32,40 +20,9 @@ function SyncIndicator() {
   const cloudPulls = useCloudSyncStatus((s) => s.pullsReceived)
   const cloudLastSync = useCloudSyncStatus((s) => s.lastSyncedAt)
 
-  // Share link state
-  const [copied, setCopied] = useState(false)
-  const [copyError, setCopyError] = useState<string | null>(null)
+  // Share dialog visibility
+  const [shareOpen, setShareOpen] = useState(false)
 
-  const handleShare = useCallback(async () => {
-    setCopyError(null)
-    const token = readTokenFromStorage()
-    if (!token) {
-      setCopyError('尚未建立同步标识')
-      return
-    }
-    const url = buildShareUrl(token)
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url)
-      } else {
-        // Fallback for non-secure contexts (e.g. plain http on LAN).
-        const ta = document.createElement('textarea')
-        ta.value = url
-        ta.style.position = 'fixed'
-        ta.style.opacity = '0'
-        document.body.appendChild(ta)
-        ta.select()
-        document.execCommand('copy')
-        document.body.removeChild(ta)
-      }
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch (e) {
-      setCopyError((e as Error).message || '复制失败')
-    }
-  }, [])
-
-  // Priorities: cloud synced > cloud syncing > cloud error/offline > LAN connected > LAN connecting > LAN error > idle
   let dot = 'bg-ink-muted'
   let dotStyle: CSSProperties | undefined
   let label = '未连接'
@@ -88,42 +45,34 @@ function SyncIndicator() {
     dot = 'bg-danger'
     label = '同步出错'
     title = cloudError ?? '云端同步出现错误'
-  } else if (lanStatus === 'connected') {
-    dot = 'animate-success-pulse'
-    dotStyle = { backgroundColor: '#5eead4', boxShadow: '0 0 6px rgba(94, 234, 212, 0.6)' }
-    label = '已同步'
-    title = `局域网已连接 · ${peerCount} 台设备\n推送 ${lanPushes} 次 · 接收 ${lanReceived} 次`
-  } else if (lanStatus === 'connecting' || lanStatus === 'reconnecting') {
-    dot = 'bg-warning animate-pulse'
-    label = '连接中'
-    title = '正在连接局域网同步服务器…'
-  } else if (lanStatus === 'error') {
-    dot = 'bg-danger'
-    label = '同步出错'
-    title = lanError ?? '局域网同步出现错误'
   }
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2">
-      <div
-        className="flex items-center gap-2 font-mono text-[10px] text-ink-muted uppercase tracking-widest"
-        title={title}
-        aria-label={`同步状态: ${label}`}
-      >
-        <span className={`w-1.5 h-1.5 rounded-full ${dot}`} style={dotStyle} aria-hidden="true" />
-        <span>{label}</span>
+    <>
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        <div
+          className="flex items-center gap-2 font-mono text-[10px] text-ink-muted uppercase tracking-widest"
+          title={title}
+          aria-label={`同步状态: ${label}`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${dot}`} style={dotStyle} aria-hidden="true" />
+          <span>{label}</span>
+        </div>
+        <button
+          onClick={() => setShareOpen(true)}
+          className="px-2.5 sm:px-3 py-2 bg-surface border border-border text-ink-secondary hover:border-border-strong hover:text-ink shadow-soft transition-all duration-200 ease-snappy font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 sm:gap-2"
+          title="打开分享面板,复制同步链接到其他设备"
+          aria-label="打开分享面板"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+          </svg>
+          <span className="hidden sm:inline">分享</span>
+        </button>
       </div>
-      <button
-        onClick={handleShare}
-        className="font-mono text-[10px] uppercase tracking-widest text-ink-muted hover:text-accent border border-border hover:border-accent/40 px-1.5 py-0.5 rounded transition-colors duration-200"
-        title={copyError ?? '复制分享链接,粘贴到其他设备以同步数据'}
-        aria-label="复制分享链接"
-      >
-        {copied ? '已复制' : '分享'}
-      </button>
-    </div>
+      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} />
+    </>
   )
 }
 
 export { SyncIndicator }
-

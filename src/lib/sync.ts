@@ -1,11 +1,9 @@
 /**
- * LAN Sync — client side.
+ * Cloud sync — pure helpers.
  *
- * Pure helpers (no React, no WebSocket):
- *   - `mergeTasks(local, remote)`: last-write-wins reconciliation by
- *     `updatedAt`. Used by tests and could be reused server-side.
- *
- * WebSocket client lives in `src/hooks/useSync.ts`.
+ * `mergeTasks` implements last-write-wins reconciliation by `updatedAt`
+ * and is used by both the cloud sync layer and unit tests.
+ * `mergeCloudSnapshot` is a thin wrapper for the cloud snapshot shape.
  */
 
 import type { Task } from '@/types/task'
@@ -43,37 +41,10 @@ export function mergeTasks(local: Task[], remote: Task[]): Task[] {
 /**
  * Merge a server snapshot into the local task list.
  *
- * This is a convenience wrapper around `mergeTasks` that extracts the task
- * array from a `CloudSnapshot`. The LWW reconciliation (by `updatedAt`) is
- * the same as LAN sync, so deletions with newer `updatedAt` propagate
+ * Convenience wrapper around `mergeTasks` that extracts the task array
+ * from a `CloudSnapshot`. Deletions with newer `updatedAt` propagate
  * correctly via `deletedAt` tombstones.
  */
 export function mergeCloudSnapshot(local: Task[], snapshot: { tasks: Task[] }): Task[] {
   return mergeTasks(local, snapshot.tasks)
-}
-
-/** Sync WebSocket endpoint path — must match `vite-plugin-sync.ts`. */
-export const SYNC_PATH = '/__helm-sync'
-
-/** Build the WebSocket URL from the current page origin. */
-export function buildSyncUrl(): string {
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${proto}//${window.location.host}${SYNC_PATH}`
-}
-
-/**
- * Lightweight connection status enum shared by the client and the UI badge.
- */
-export type SyncStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'error'
-
-export interface SyncStatusInfo {
-  status: SyncStatus
-  /** Number of *other* peers connected to the same sync server (approximate). */
-  peerCount: number
-  /** Most recent error message, if any. */
-  error: string | null
-  /** Number of state pushes sent since connection started. */
-  pushesSent: number
-  /** Number of remote snapshots received since connection started. */
-  snapshotsReceived: number
 }
